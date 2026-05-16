@@ -17,8 +17,6 @@ Secrets.plist
 .env.local
 .env.development
 .env.production
-ApiKeys.swift
-APIKeys.swift
 
 # Certificates & Provisioning
 *.p12
@@ -302,3 +300,6 @@ draft-*.md
 # ✅ No certificates or provisioning profiles
 # ✅ No .env files
 # =====================================================
+
+# Claude Code local settings (per-user, do not commit)
+.claude/settings.local.json

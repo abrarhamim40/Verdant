@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟡 Week 0 - Pre-development setup
-**Days until launch:** 70 days
-**Last session:** None yet
-**Next task:** Sign up Plant.id API + test 10 plants
+**Current Status:** 🟢 Week 1 Day 1 - Foundation scaffold complete (Xcode registration pending)
+**Days until launch:** 69 days
+**Last session:** 2026-05-16 — Project consolidation + Week 1 Day 1 scaffold (folders, colors, Config, APIKeys, Logger, RootView)
+**Next task:** Open Xcode, register new files/folders in build target, then Day 2 (SwiftData models)
 
 ---
 
@@ -39,9 +39,9 @@
 - [ ] Git initialized
 - [ ] First Claude Code session run
 
-### **WEEK 1: Foundation** ⏳ PENDING
+### **WEEK 1: Foundation** 🟡 IN PROGRESS
 
-- [ ] Day 1: Xcode project + folder structure + Asset Catalog
+- [x] Day 1: Xcode project + folder structure + Asset Catalog (+ Config.plist, APIKeys, Logger, RootView shell)
 - [ ] Day 2: All SwiftData models (Plant, PlantScan, etc.)
 - [ ] Day 3: NetworkError + ImageProcessor + Logger
 - [ ] Day 4: PlantIdService basic + first API test
