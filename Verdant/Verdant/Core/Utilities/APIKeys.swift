@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum APIKeys {
+nonisolated enum APIKeys {
     enum Environment: String {
         case development
         case staging
