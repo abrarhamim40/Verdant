@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 1 Day 1 - Foundation scaffold complete (Xcode registration pending)
+**Current Status:** 🟢 Week 1 Day 3 in progress — Networking foundation written (Xcode registration pending)
 **Days until launch:** 69 days
-**Last session:** 2026-05-16 — Project consolidation + Week 1 Day 1 scaffold (folders, colors, Config, APIKeys, Logger, RootView)
-**Next task:** Open Xcode, register new files/folders in build target, then Day 2 (SwiftData models)
+**Last session:** 2026-05-17 — Day 2 SwiftData models + ModelContainer (CloudKit), Day 3 AIError + ImageProcessor + Data hashing + ResponseCache
+**Next task:** Register Day 2/3 files in Xcode, build, then Day 4 (PlantIdService basic + first API test)
 
 ---
 
@@ -42,8 +42,8 @@
 ### **WEEK 1: Foundation** 🟡 IN PROGRESS
 
 - [x] Day 1: Xcode project + folder structure + Asset Catalog (+ Config.plist, APIKeys, Logger, RootView shell)
-- [ ] Day 2: All SwiftData models (Plant, PlantScan, etc.)
-- [ ] Day 3: NetworkError + ImageProcessor + Logger
+- [x] Day 2: SwiftData models (AppUser, Plant, PlantScan, CareReminder, UserPreferences) + ModelContainer with CloudKit (.automatic)
+- [x] Day 3: AIError enum + UIImage+Optimization + Data+Hashing (SHA256) + ResponseCache actor (24h TTL)
 - [ ] Day 4: PlantIdService basic + first API test
 - [ ] Day 5: GeminiService + treatment parsing
 - [ ] Day 6: AIService coordinator + caching

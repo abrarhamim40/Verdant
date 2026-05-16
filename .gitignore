@@ -303,3 +303,6 @@ draft-*.md
 
 # Claude Code local settings (per-user, do not commit)
 .claude/settings.local.json
+
+# graphify knowledge graph output (regenerable, large)
+graphify-out/
