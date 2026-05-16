@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 1 Day 6 — AIService coordinator written on `feat/ai-coordinator` (Xcode registration pending)
+**Current Status:** 🟢 Week 1 Day 7 — TabView shell polish on `feat/tab-shell-polish` (Xcode registration pending)
 **Days until launch:** 68 days
-**Last session:** 2026-05-17 — Day 5 GeminiService merged; Day 6 AppleVisionService + PlantAnalysisResult + AIService coordinator + 9 tests
-**Next task:** Register Day 6 files in Xcode, run tests, then Day 7 (TabView shell wiring — already scaffolded, integrate with ModelContainer + RootView polish)
+**Last session:** 2026-05-17 — Day 6 AIService merged; Day 7 Color+Verdant extension + persistent tab selection + in-memory preview
+**Next task:** Register Day 7 file in Xcode, build, run all 27 tests, merge → Week 1 COMPLETE. Then Week 2 Day 8 (camera + multi-photo capture).
 
 ---
 
@@ -47,7 +47,7 @@
 - [x] Day 4: PlantIdModels (Codable) + PlantIdService actor (cache-wired, AIError-mapped) + 8 unit tests
 - [x] Day 5: GeminiModels + GeminiService actor (Gemini 2.5 Pro, JSON output mode, markdown stripping) + 10 unit tests
 - [x] Day 6: AppleVisionService (on-device pre-filter) + PlantAnalysisResult (combined model) + AIService coordinator (Vision → Plant.id → Gemini, 24h cache) + 9 tests
-- [ ] Day 7: TabView shell + navigation
+- [x] Day 7: TabView shell polish — Color+Verdant typed extension, @SceneStorage tab persistence, in-memory ModelContainer preview
 - [ ] Day 5: GeminiService + treatment parsing
 - [ ] Day 6: AIService coordinator + caching
 - [ ] Day 7: TabView shell + navigation

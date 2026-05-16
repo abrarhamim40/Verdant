@@ -70,18 +70,18 @@ actor GeminiService {
         request.httpBody = try encoder.encode(body)
 
         let started = Date()
-        await Logger.ai.info("Gemini request started")
+        Logger.ai.info("Gemini request started")
 
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            await Logger.ai.error("Gemini transport error: \(error.localizedDescription, privacy: .public)")
+            Logger.ai.error("Gemini transport error: \(error.localizedDescription, privacy: .public)")
             throw AIError.networkError
         }
 
         let elapsed = Date().timeIntervalSince(started)
-        await Logger.ai.info("Gemini response in \(elapsed, format: .fixed(precision: 2))s")
+        Logger.ai.info("Gemini response in \(elapsed, format: .fixed(precision: 2))s")
 
         guard let http = response as? HTTPURLResponse else {
             throw AIError.networkError

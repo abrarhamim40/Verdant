@@ -46,10 +46,10 @@ actor PlantIdService {
             throw AIError.invalidInput
         }
 
-        let cacheKey = await Self.cacheKey(images: images, location: location)
+        let cacheKey = Self.cacheKey(images: images, location: location)
         if let cached = await cache.get(hash: cacheKey),
            let decoded = try? decoder.decode(PlantIdResponse.self, from: cached) {
-            await Logger.ai.info("Plant.id cache hit")
+            Logger.ai.info("Plant.id cache hit")
             return decoded
         }
 
@@ -69,18 +69,18 @@ actor PlantIdService {
         request.httpBody = try encoder.encode(body)
 
         let started = Date()
-        await Logger.ai.info("Plant.id request started")
+        Logger.ai.info("Plant.id request started")
 
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            await Logger.ai.error("Plant.id transport error: \(error.localizedDescription, privacy: .public)")
+            Logger.ai.error("Plant.id transport error: \(error.localizedDescription, privacy: .public)")
             throw AIError.networkError
         }
 
         let elapsed = Date().timeIntervalSince(started)
-        await Logger.ai.info("Plant.id response in \(elapsed, format: .fixed(precision: 2))s")
+        Logger.ai.info("Plant.id response in \(elapsed, format: .fixed(precision: 2))s")
 
         guard let http = response as? HTTPURLResponse else {
             throw AIError.networkError
@@ -93,7 +93,7 @@ actor PlantIdService {
                 await cache.set(hash: cacheKey, data: data)
                 return decoded
             } catch {
-                await Logger.ai.error("Plant.id decode failed: \(error.localizedDescription, privacy: .public)")
+                Logger.ai.error("Plant.id decode failed: \(error.localizedDescription, privacy: .public)")
                 throw AIError.parsingFailed
             }
         case 401:
@@ -108,7 +108,7 @@ actor PlantIdService {
     }
 
     /// Deterministic cache key — same photos (+ rounded location) reuse the same Plant.id response for 24h.
-    @MainActor private static func cacheKey(images: [Data], location: CLLocationCoordinate2D?) -> String {
+    nonisolated private static func cacheKey(images: [Data], location: CLLocationCoordinate2D?) -> String {
         var combined = Data()
         for image in images {
             combined.append(image)
