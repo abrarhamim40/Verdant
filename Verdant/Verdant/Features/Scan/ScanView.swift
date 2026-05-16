@@ -5,7 +5,8 @@
 //  Created by Abrar Hamim on 5/17/26.
 //
 //  Day 8 deliverable: PhotosPicker-based multi-photo selection.
-//  Day 9 will add live camera. Day 10-11 wires the "Identify" CTA to the AI pipeline.
+//  Day 9 added live camera capture + photo guidance overlay.
+//  Day 10-11 will wire the "Identify" CTA to the AI pipeline.
 
 import SwiftUI
 import PhotosUI
@@ -17,6 +18,8 @@ struct ScanView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var photos: [ScanPhoto] = []
     @State private var isLoadingPhotos = false
+    @State private var showCamera = false
+    @State private var showTipsSheet = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -24,7 +27,7 @@ struct ScanView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     photoArea
-                    pickerButton
+                    captureButtons
                     if !photos.isEmpty {
                         identifyButton
                         helperText
@@ -34,6 +37,33 @@ struct ScanView: View {
             }
             .navigationTitle("Scan")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar { toolbarContent }
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraPicker(
+                    onCapture: { image in
+                        showCamera = false
+                        Task { await appendCapturedImage(image) }
+                    },
+                    onCancel: { showCamera = false }
+                )
+                .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showTipsSheet) {
+                NavigationStack {
+                    ScrollView {
+                        PhotoGuidanceTips()
+                            .padding(20)
+                    }
+                    .navigationTitle("Photo Tips")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { showTipsSheet = false }
+                        }
+                    }
+                }
+                .presentationDetents([.medium])
+            }
             .alert("Couldn't load photo", isPresented: errorBinding) {
                 Button("OK") { errorMessage = nil }
             } message: {
@@ -42,22 +72,39 @@ struct ScanView: View {
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showTipsSheet = true
+            } label: {
+                Image(systemName: "lightbulb")
+            }
+            .accessibilityLabel("Photo tips")
+        }
+    }
+
+    // MARK: - Photo area
 
     @ViewBuilder
     private var photoArea: some View {
         if photos.isEmpty {
-            emptyState
+            VStack(spacing: 20) {
+                emptyHeader
+                PhotoGuidanceTips()
+            }
         } else {
             photoGrid
         }
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 16) {
+    private var emptyHeader: some View {
+        VStack(spacing: 12) {
             Image(systemName: "camera.viewfinder")
-                .font(.system(size: 64, weight: .light))
-                .foregroundStyle(.sage)
+                .font(.system(size: 56, weight: .light))
+                .foregroundStyle(Color.sage)
             Text("Snap your plant")
                 .font(.title2.bold())
             Text("Pick 1–3 photos. Closer shots and varied angles give better diagnoses.")
@@ -67,7 +114,7 @@ struct ScanView: View {
                 .padding(.horizontal, 24)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 48)
+        .padding(.top, 16)
     }
 
     private var photoGrid: some View {
@@ -81,23 +128,35 @@ struct ScanView: View {
         }
     }
 
-    private var pickerButton: some View {
+    // MARK: - Capture buttons
+
+    private var captureButtons: some View {
+        HStack(spacing: 12) {
+            cameraButton
+            libraryPicker
+        }
+    }
+
+    private var cameraButton: some View {
+        Button {
+            showCamera = true
+        } label: {
+            captureButtonLabel(icon: "camera.fill", text: "Camera")
+        }
+        .disabled(isLoadingPhotos || photos.count >= Self.maxPhotos)
+    }
+
+    private var libraryPicker: some View {
         PhotosPicker(
             selection: $pickerItems,
             maxSelectionCount: Self.maxPhotos,
             matching: .images,
             photoLibrary: .shared()
         ) {
-            HStack(spacing: 8) {
-                Image(systemName: isLoadingPhotos ? "hourglass" : "photo.on.rectangle.angled")
-                Text(pickerButtonLabel)
-                    .font(.body.weight(.semibold))
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(Color.sage.opacity(0.18))
-            .foregroundStyle(Color.forestGreen)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            captureButtonLabel(
+                icon: isLoadingPhotos ? "hourglass" : "photo.on.rectangle.angled",
+                text: isLoadingPhotos ? "Loading…" : "Library"
+            )
         }
         .disabled(isLoadingPhotos)
         .onChange(of: pickerItems) { _, newItems in
@@ -105,11 +164,24 @@ struct ScanView: View {
         }
     }
 
+    private func captureButtonLabel(icon: String, text: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+            Text(text)
+                .font(.body.weight(.semibold))
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 52)
+        .background(Color.sage.opacity(0.18))
+        .foregroundStyle(Color.forestGreen)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    // MARK: - Identify
+
     private var identifyButton: some View {
         Button {
-            // Day 10-11 wires this to AIService + ScanningView.
-            // For now, surface a placeholder so we can verify the path end-to-end visually.
-            errorMessage = "Identify pipeline lands Day 10-11. Photo data is ready (\(photos.count) optimized image\(photos.count == 1 ? "" : "s"))."
+            errorMessage = "Identify pipeline lands Day 10-11. Photo data ready (\(photos.count) optimized image\(photos.count == 1 ? "" : "s"))."
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "wand.and.stars")
@@ -127,20 +199,14 @@ struct ScanView: View {
 
     private var helperText: some View {
         Text(photos.count >= Self.maxPhotos
-             ? "Maximum 3 photos reached. Tap × to swap one out."
+             ? "Maximum 3 photos. Tap × to swap one out."
              : "\(photos.count) of \(Self.maxPhotos) selected. Add more for higher accuracy.")
             .font(.footnote)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
     }
 
-    // MARK: - Computed
-
-    private var pickerButtonLabel: String {
-        if isLoadingPhotos { return "Processing…" }
-        if photos.isEmpty { return "Choose Photos" }
-        return "Change Selection"
-    }
+    // MARK: - Bindings
 
     private var errorBinding: Binding<Bool> {
         Binding(
@@ -152,6 +218,11 @@ struct ScanView: View {
     // MARK: - Photo loading
 
     private func loadPhotos(from items: [PhotosPickerItem]) async {
+        guard !items.isEmpty else {
+            photos.removeAll()
+            return
+        }
+
         isLoadingPhotos = true
         defer { isLoadingPhotos = false }
 
@@ -178,9 +249,26 @@ struct ScanView: View {
         photos = loaded
     }
 
+    private func appendCapturedImage(_ image: UIImage) async {
+        guard photos.count < Self.maxPhotos else { return }
+        guard let optimized = image.optimizeForAPI() else {
+            errorMessage = "Couldn't process that photo. Try again with better lighting."
+            return
+        }
+
+        let captured = ScanPhoto(
+            pickerItem: nil,
+            optimizedData: optimized,
+            displayImage: image
+        )
+        photos.append(captured)
+    }
+
     private func remove(_ photo: ScanPhoto) {
         photos.removeAll { $0.id == photo.id }
-        pickerItems.removeAll { $0 == photo.pickerItem }
+        if let item = photo.pickerItem {
+            pickerItems.removeAll { $0 == item }
+        }
     }
 }
 
@@ -214,11 +302,16 @@ private struct ScanPhotoCard: View {
 
 struct ScanPhoto: Identifiable {
     let id: UUID
-    let pickerItem: PhotosPickerItem
+    let pickerItem: PhotosPickerItem?
     let optimizedData: Data
     let displayImage: UIImage
 
-    init(id: UUID = UUID(), pickerItem: PhotosPickerItem, optimizedData: Data, displayImage: UIImage) {
+    init(
+        id: UUID = UUID(),
+        pickerItem: PhotosPickerItem?,
+        optimizedData: Data,
+        displayImage: UIImage
+    ) {
         self.id = id
         self.pickerItem = pickerItem
         self.optimizedData = optimizedData

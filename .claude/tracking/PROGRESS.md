@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 2 Day 8 — ScanView (PhotosPicker) written on `feat/scan-photo-picker` (Xcode registration pending)
+**Current Status:** 🟢 Week 2 Day 9 — Live camera + guidance overlay on `feat/scan-camera-overlay` (Xcode registration + Info.plist key pending)
 **Days until launch:** 68 days
-**Last session:** 2026-05-17 — Week 1 COMPLETE (Days 1-7 merged); Day 8 ScanView + PhotosPicker multi-select + photo grid + image optimization wired
-**Next task:** Register ScanView.swift in Xcode → run in simulator → pick photos → verify image data captured → Day 9 (live camera + photo guidance overlay).
+**Last session:** 2026-05-17 — Day 8 merged; Day 9 CameraPicker (UIVC bridge) + PhotoGuidanceTips + ScanView now offers Camera/Library buttons side-by-side, toolbar lightbulb for tips sheet
+**Next task:** Register 2 new files in Xcode, add NSCameraUsageDescription to Info, build + run, then Day 10-11 (ScanningView with progress states + wire to AIService).
 
 ---
 
@@ -58,7 +58,7 @@
 
 Week 2:
 - [x] Day 8: ScanView with PhotosPicker (1-3 photos), photo grid + remove × per card, image optimization wired (UIImage → 1024px JPEG Data), placeholder Identify button
-- [ ] Day 9: Live camera capture + photo guidance overlay
+- [x] Day 9: Live camera (CameraPicker UIVC bridge, simulator falls back to library), PhotoGuidanceTips component (4 composition tips card), toolbar lightbulb opens medium-detent sheet
 - [ ] Day 10-11: ScanningView with states
 - [ ] Day 12-13: DiagnosisResultView + confidence
 - [ ] Day 14: Save to plants flow
