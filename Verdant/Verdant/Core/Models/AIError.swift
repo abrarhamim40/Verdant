@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum AIError: LocalizedError, Equatable {
+nonisolated enum AIError: LocalizedError, Equatable, Sendable {
     case noPlantDetected
     case imageUnclear
     case compressionFailed
