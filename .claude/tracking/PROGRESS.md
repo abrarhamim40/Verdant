@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 1 Day 3 in progress — Networking foundation written (Xcode registration pending)
+**Current Status:** 🟢 Week 1 Day 4 — PlantIdService written on `feat/plant-id-service` (Xcode registration pending)
 **Days until launch:** 69 days
-**Last session:** 2026-05-17 — Day 2 SwiftData models + ModelContainer (CloudKit), Day 3 AIError + ImageProcessor + Data hashing + ResponseCache
-**Next task:** Register Day 2/3 files in Xcode, build, then Day 4 (PlantIdService basic + first API test)
+**Last session:** 2026-05-17 — Day 2 SwiftData models, Day 3 networking foundation, Day 4 PlantIdService + Codable models + unit tests
+**Next task:** Register Day 4 files in Xcode, add PLANT_ID_API_KEY to Config.plist, run unit tests, then Day 5 (GeminiService)
 
 ---
 
@@ -44,7 +44,8 @@
 - [x] Day 1: Xcode project + folder structure + Asset Catalog (+ Config.plist, APIKeys, Logger, RootView shell)
 - [x] Day 2: SwiftData models (AppUser, Plant, PlantScan, CareReminder, UserPreferences) + ModelContainer with CloudKit (.automatic)
 - [x] Day 3: AIError enum + UIImage+Optimization + Data+Hashing (SHA256) + ResponseCache actor (24h TTL)
-- [ ] Day 4: PlantIdService basic + first API test
+- [x] Day 4: PlantIdModels (Codable) + PlantIdService actor (cache-wired, AIError-mapped) + 8 unit tests
+- [ ] Day 5: GeminiService + treatment parsing
 - [ ] Day 5: GeminiService + treatment parsing
 - [ ] Day 6: AIService coordinator + caching
 - [ ] Day 7: TabView shell + navigation
