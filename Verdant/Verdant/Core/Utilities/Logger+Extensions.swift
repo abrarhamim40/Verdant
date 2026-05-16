@@ -9,12 +9,12 @@ import Foundation
 import os
 
 extension Logger {
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.verdant.app"
+    nonisolated private static let subsystem = Bundle.main.bundleIdentifier ?? "com.verdant.app"
 
-    static let network = Logger(subsystem: subsystem, category: "network")
-    static let ai = Logger(subsystem: subsystem, category: "ai")
-    static let data = Logger(subsystem: subsystem, category: "data")
-    static let ui = Logger(subsystem: subsystem, category: "ui")
-    static let subscription = Logger(subsystem: subsystem, category: "subscription")
-    static let auth = Logger(subsystem: subsystem, category: "auth")
+    nonisolated static let network = Logger(subsystem: subsystem, category: "network")
+    nonisolated static let ai = Logger(subsystem: subsystem, category: "ai")
+    nonisolated static let data = Logger(subsystem: subsystem, category: "data")
+    nonisolated static let ui = Logger(subsystem: subsystem, category: "ui")
+    nonisolated static let subscription = Logger(subsystem: subsystem, category: "subscription")
+    nonisolated static let auth = Logger(subsystem: subsystem, category: "auth")
 }
