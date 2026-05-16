@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 1 Day 7 — TabView shell polish on `feat/tab-shell-polish` (Xcode registration pending)
+**Current Status:** 🟢 Week 2 Day 8 — ScanView (PhotosPicker) written on `feat/scan-photo-picker` (Xcode registration pending)
 **Days until launch:** 68 days
-**Last session:** 2026-05-17 — Day 6 AIService merged; Day 7 Color+Verdant extension + persistent tab selection + in-memory preview
-**Next task:** Register Day 7 file in Xcode, build, run all 27 tests, merge → Week 1 COMPLETE. Then Week 2 Day 8 (camera + multi-photo capture).
+**Last session:** 2026-05-17 — Week 1 COMPLETE (Days 1-7 merged); Day 8 ScanView + PhotosPicker multi-select + photo grid + image optimization wired
+**Next task:** Register ScanView.swift in Xcode → run in simulator → pick photos → verify image data captured → Day 9 (live camera + photo guidance overlay).
 
 ---
 
@@ -54,10 +54,11 @@
 
 **Deliverable:** App opens, scans 1 plant successfully
 
-### **WEEK 2-3: Core Scan Flow** ⏳ PENDING
+### **WEEK 2-3: Core Scan Flow** 🟡 IN PROGRESS
 
 Week 2:
-- [ ] Day 8-9: Camera + multi-photo capture
+- [x] Day 8: ScanView with PhotosPicker (1-3 photos), photo grid + remove × per card, image optimization wired (UIImage → 1024px JPEG Data), placeholder Identify button
+- [ ] Day 9: Live camera capture + photo guidance overlay
 - [ ] Day 10-11: ScanningView with states
 - [ ] Day 12-13: DiagnosisResultView + confidence
 - [ ] Day 14: Save to plants flow

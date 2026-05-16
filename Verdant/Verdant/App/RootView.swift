@@ -21,7 +21,7 @@ struct RootView: View {
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(RootTab.home)
 
-            ScanTabPlaceholder()
+            ScanView()
                 .tabItem { Label("Scan", systemImage: "camera.viewfinder") }
                 .tag(RootTab.scan)
 
@@ -46,19 +46,6 @@ private struct HomeTabPlaceholder: View {
                 description: Text("Week 4 deliverable.")
             )
             .navigationTitle("Verdant")
-        }
-    }
-}
-
-private struct ScanTabPlaceholder: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Scan",
-                systemImage: "camera.viewfinder",
-                description: Text("Week 2–3 deliverable.")
-            )
-            .navigationTitle("Scan")
         }
     }
 }
