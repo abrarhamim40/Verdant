@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 1 Day 5 — GeminiService written on `feat/gemini-service` (Xcode registration pending)
+**Current Status:** 🟢 Week 1 Day 6 — AIService coordinator written on `feat/ai-coordinator` (Xcode registration pending)
 **Days until launch:** 68 days
-**Last session:** 2026-05-17 — Day 4 PlantIdService merged to main; Day 5 GeminiService + TreatmentPlan + 10 tests
-**Next task:** Register Day 5 files in Xcode, add GEMINI_API_KEY to Config.plist, run tests, then Day 6 (AIService coordinator + PlantAnalysisResult + cache integration)
+**Last session:** 2026-05-17 — Day 5 GeminiService merged; Day 6 AppleVisionService + PlantAnalysisResult + AIService coordinator + 9 tests
+**Next task:** Register Day 6 files in Xcode, run tests, then Day 7 (TabView shell wiring — already scaffolded, integrate with ModelContainer + RootView polish)
 
 ---
 
@@ -46,7 +46,8 @@
 - [x] Day 3: AIError enum + UIImage+Optimization + Data+Hashing (SHA256) + ResponseCache actor (24h TTL)
 - [x] Day 4: PlantIdModels (Codable) + PlantIdService actor (cache-wired, AIError-mapped) + 8 unit tests
 - [x] Day 5: GeminiModels + GeminiService actor (Gemini 2.5 Pro, JSON output mode, markdown stripping) + 10 unit tests
-- [ ] Day 6: AIService coordinator + caching
+- [x] Day 6: AppleVisionService (on-device pre-filter) + PlantAnalysisResult (combined model) + AIService coordinator (Vision → Plant.id → Gemini, 24h cache) + 9 tests
+- [ ] Day 7: TabView shell + navigation
 - [ ] Day 5: GeminiService + treatment parsing
 - [ ] Day 6: AIService coordinator + caching
 - [ ] Day 7: TabView shell + navigation
