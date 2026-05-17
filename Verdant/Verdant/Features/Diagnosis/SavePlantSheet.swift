@@ -169,12 +169,12 @@ struct SavePlantSheet: View {
         do {
             try modelContext.save()
             Logger.data.info("Saved plant: \(trimmedNickname, privacy: .public)")
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            Haptics.success()
             onSaved()
             dismiss()
         } catch {
             Logger.data.error("Save failed: \(error.localizedDescription, privacy: .public)")
-            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            Haptics.error()
             errorMessage = "Couldn't save right now. Try again."
         }
     }
