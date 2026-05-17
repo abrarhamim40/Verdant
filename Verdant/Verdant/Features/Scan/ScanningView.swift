@@ -87,105 +87,13 @@ struct ScanningView: View {
         .padding(24)
     }
 
-    // MARK: - Success (Day 12-13 placeholder)
+    // MARK: - Success → full diagnosis screen
 
     private func successView(_ result: PlantAnalysisResult) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(result.plantName)
-                        .font(.largeTitle.bold())
-                    if let scientific = result.scientificName {
-                        Text(scientific)
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
-                    }
-                    Text("\(result.confidencePercent)% confidence")
-                        .font(.subheadline.weight(.medium))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(confidenceColor(result).opacity(0.18))
-                        .foregroundStyle(confidenceColor(result))
-                        .clipShape(Capsule())
-                }
-
-                if result.needsExpertReview {
-                    expertReviewWarning
-                }
-
-                if let disease = result.disease, result.hasDiseaseDetected {
-                    diseaseSection(disease)
-                }
-
-                treatmentSection(result.treatment)
-
-                Text("Full diagnosis screen lands Day 12-13.")
-                    .font(.footnote)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 12)
-            }
-            .padding(20)
-        }
-    }
-
-    private func confidenceColor(_ result: PlantAnalysisResult) -> Color {
-        if result.isHighConfidence { return .forestGreen }
-        if result.needsExpertReview { return .terracotta }
-        return .sage
-    }
-
-    private var expertReviewWarning: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(Color.terracotta)
-            Text("Confidence is low. Consider retaking with multiple angles.")
-                .font(.subheadline)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.terracotta.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private func diseaseSection(_ disease: DiseaseSuggestion) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Possible issue", systemImage: "cross.case.fill")
-                .font(.headline)
-            Text(disease.name)
-                .font(.title3.weight(.semibold))
-            Text("\(Int(disease.probability * 100))% likely")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            if let description = disease.details?.description {
-                Text(description)
-                    .font(.body)
-                    .padding(.top, 4)
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.terracotta.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private func treatmentSection(_ plan: TreatmentPlan) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Care plan", systemImage: "drop.fill")
-                .font(.headline)
-                .foregroundStyle(Color.forestGreen)
-            Text(plan.summary)
-                .font(.body)
-            HStack(spacing: 16) {
-                FrequencyChip(icon: "drop", days: plan.wateringFrequencyDays, label: "water")
-                FrequencyChip(icon: "sparkles", days: plan.fertilizingFrequencyDays, label: "feed")
-            }
-            .padding(.top, 4)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.sage.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        DiagnosisResultView(
+            result: result,
+            primaryPhotoData: request.images.first
+        )
     }
 
     // MARK: - Failure
@@ -307,28 +215,6 @@ struct ScanningView: View {
         "Generating your care plan…",
         "Almost there…"
     ]
-}
-
-// MARK: - Frequency chip
-
-private struct FrequencyChip: View {
-    let icon: String
-    let days: Int
-    let label: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .foregroundStyle(Color.forestGreen)
-            Text("Every \(days) days")
-                .font(.subheadline.weight(.medium))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.5))
-        .clipShape(Capsule())
-        .accessibilityLabel("\(label) every \(days) days")
-    }
 }
 
 // MARK: - State

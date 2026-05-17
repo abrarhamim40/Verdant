@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 2 Day 10-11 — Scanning flow on `feat/scanning-flow` (Xcode registration pending)
+**Current Status:** 🟢 Week 2 Day 12-13 — DiagnosisResultView on `feat/diagnosis-result` (Xcode registration pending)
 **Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 9 merged; Day 10-11 ScanningView with full state machine (running / success / failure / cancelled) wired to AIService.shared.analyzePlant, ScanRequest navigation, cancel button, retry button, placeholder result card
-**Next task:** Register 2 new files in Xcode → real end-to-end test: pick photos → tap Identify → see loading → real Plant.id + Gemini response → Day 12-13 (full DiagnosisResultView).
+**Last session:** 2026-05-17 — Day 10-11 merged with verified end-to-end (Butea monosperma 80%, Gemini flash JSON ok); Day 12-13 ConfidenceScoreView (ring/pill) + HealthBadge (4 states) + full DiagnosisResultView (photo header, identification, disease, treatment, warnings, prevention, alt matches collapsible)
+**Next task:** Register 3 new files in Xcode → rescan to see full diagnosis screen → Day 14 (Save to plants flow — wires HealthBadge save button to SwiftData).
 
 ---
 
@@ -60,7 +60,8 @@ Week 2:
 - [x] Day 8: ScanView with PhotosPicker (1-3 photos), photo grid + remove × per card, image optimization wired (UIImage → 1024px JPEG Data), placeholder Identify button
 - [x] Day 9: Live camera (CameraPicker UIVC bridge, simulator falls back to library), PhotoGuidanceTips component (4 composition tips card), toolbar lightbulb opens medium-detent sheet
 - [x] Day 10-11: ScanningView state machine (running / success / failure / cancelled) + cycling status messages + cancel button + retry on error + AIService end-to-end wired + ScanRequest navigation type
-- [ ] Day 12-13: DiagnosisResultView + confidence
+- [x] Day 12-13: DiagnosisResultView (photo header + identification + disease + treatment + warnings + prevention + collapsible alternatives) + ConfidenceScoreView (ring/pill) + HealthBadge (healthy/watch/treat/critical) components
+- [ ] Day 14: Save to plants flow
 - [ ] Day 14: Save to plants flow
 
 Week 3:
