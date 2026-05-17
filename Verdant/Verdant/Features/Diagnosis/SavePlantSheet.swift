@@ -14,6 +14,7 @@ import os
 struct SavePlantSheet: View {
     let result: PlantAnalysisResult
     let primaryPhotoData: Data?
+    let photoCount: Int
     let onSaved: () -> Void
 
     @State private var nickname: String
@@ -30,10 +31,12 @@ struct SavePlantSheet: View {
     init(
         result: PlantAnalysisResult,
         primaryPhotoData: Data?,
+        photoCount: Int = 1,
         onSaved: @escaping () -> Void
     ) {
         self.result = result
         self.primaryPhotoData = primaryPhotoData
+        self.photoCount = photoCount
         self.onSaved = onSaved
         _nickname = State(initialValue: result.commonNames.first ?? result.plantName)
     }
@@ -153,8 +156,8 @@ struct SavePlantSheet: View {
             plantNameDetected: result.plantName,
             healthStatus: result.hasDiseaseDetected ? "stressed" : "healthy",
             confidence: result.confidence,
-            multiAngleScan: false,
-            photoCount: 1
+            multiAngleScan: photoCount > 1,
+            photoCount: photoCount
         )
         scan.diseaseDetected = result.disease?.name
         scan.diseaseProbability = result.disease?.probability

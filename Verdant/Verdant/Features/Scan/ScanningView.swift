@@ -92,7 +92,8 @@ struct ScanningView: View {
     private func successView(_ result: PlantAnalysisResult) -> some View {
         DiagnosisResultView(
             result: result,
-            primaryPhotoData: request.images.first
+            primaryPhotoData: request.images.first,
+            photoCount: request.images.count
         )
     }
 
