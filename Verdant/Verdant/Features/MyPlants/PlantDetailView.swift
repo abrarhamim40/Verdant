@@ -67,6 +67,7 @@ struct PlantDetailView: View {
             careAttributesSection
             if let analysis = latestAnalysis {
                 latestScanSection(analysis)
+                SourceCitationsView(plantDetails: analysis.details)
             }
             footerSection
         }
@@ -180,32 +181,12 @@ struct PlantDetailView: View {
                 }
             }
 
-            Text(analysis.treatment.summary)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 12) {
-                frequencyChip(icon: "drop", label: "Water", days: analysis.treatment.wateringFrequencyDays)
-                frequencyChip(icon: "sparkles", label: "Feed", days: analysis.treatment.fertilizingFrequencyDays)
-            }
+            TreatmentStepsView(plan: analysis.treatment, compact: true)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.forestGreen.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private func frequencyChip(icon: String, label: String, days: Int) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .foregroundStyle(Color.forestGreen)
-            Text("\(label) · \(days)d")
-                .font(.subheadline.weight(.medium))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.6))
-        .clipShape(Capsule())
     }
 
     // MARK: - Footer
