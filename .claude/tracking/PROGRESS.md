@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 3 Day 19 — Multi-angle improvement on `feat/multi-angle` (Xcode registration pending)
+**Current Status:** 🟢 Week 3 Day 20-21 — Polish on `feat/scan-polish` (Xcode registration pending)
 **Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 17-18 merged; Day 19 threaded real `photoCount` through DiagnosisResultView → SavePlantSheet → PlantScan model (was hardcoded 1), added "X angles" badge on diagnosis + plant detail when ≥2 photos used
-**Next task:** Build → 2-photo scan → see multi-angle badge → save → My Plants → tap → detail also shows badge → Day 20-21 (Polish scan flow: animations, haptics, empty states, test 20+ plants).
+**Last session:** 2026-05-17 — Day 19 merged; Day 20-21 centralized `Haptics` helper, wired tactile feedback across scan flow (Identify=medium impact, photo add/remove/loaded=selection, scan success/error=notification, cancel=warning, retry=medium, heart=light), state transition animations in ScanningView (opacity+scale on success, opacity+slide-up on failure), spring animations on photo grid add/remove
+**Next task:** Build → exercise full scan flow → feel haptics + transitions → test 20+ plants manually (MASTER_PLAN says).
 
 ---
 
@@ -67,6 +67,7 @@ Week 3:
 - [x] Day 15-16: TreatmentStepsView (reusable, compact mode for detail screen) + SourceCitationsView (Plant.id v3 attribution + Wikipedia tap link + CC BY-SA license + AI-generated flag), PlantAnalysisResult now carries top match's PlantDetails so citations link the right article
 - [x] Day 17-18: Vision pre-filter polish — nonisolated static keyword set/threshold/`detectsPlant` helper (testable), DEBUG top-5 classification logging, AIService checks all images instead of just first one, 8 unit tests
 - [x] Day 19: Multi-angle improvement — Plant.id was already getting all photos; threaded real `photoCount` through ScanningView → DiagnosisResultView → SavePlantSheet → PlantScan (was hardcoded 1/false), "X angles" badge surfaces on diagnosis + plant detail when ≥2 photos used
+- [x] Day 20-21: Polish — `Haptics` enum (selection/impact/success/error/warning), wired into scan flow + save + retry + cancel + alternatives toggle, state transition animations in ScanningView (opacity+scale success / opacity+slide-up failure), spring animations on photo grid add/remove/load
 - [ ] Day 14: Save to plants flow
 
 Week 3:

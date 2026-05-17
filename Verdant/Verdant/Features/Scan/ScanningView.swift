@@ -23,14 +23,19 @@ struct ScanningView: View {
             switch state {
             case .running:
                 runningView
+                    .transition(.opacity)
             case .success(let result):
                 successView(result)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
             case .failure(let error):
                 failureView(error)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
             case .cancelled:
                 cancelledView
+                    .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.35), value: state)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.backgroundPrimary.ignoresSafeArea())
         .navigationBarBackButtonHidden(state == .running)
@@ -122,6 +127,7 @@ struct ScanningView: View {
 
             VStack(spacing: 12) {
                 Button {
+                    Haptics.impact(.medium)
                     state = .running
                     Task { await runScan() }
                 } label: {
@@ -135,6 +141,7 @@ struct ScanningView: View {
                 }
 
                 Button("Back to photos") {
+                    Haptics.selection()
                     dismiss()
                 }
                 .foregroundStyle(.secondary)
@@ -189,21 +196,26 @@ struct ScanningView: View {
                 )
                 if !Task.isCancelled {
                     state = .success(result)
+                    Haptics.success()
                 }
             } catch is CancellationError {
                 state = .cancelled
+                Haptics.warning()
             } catch let error as AIError {
                 Logger.ai.error("Scan failed: \(error.localizedDescription, privacy: .public)")
                 state = .failure(error)
+                Haptics.error()
             } catch {
                 Logger.ai.error("Scan failed (unknown): \(error.localizedDescription, privacy: .public)")
                 state = .failure(.unknownError(0))
+                Haptics.error()
             }
         }
         await task?.value
     }
 
     private func cancelScan() {
+        Haptics.selection()
         task?.cancel()
         state = .cancelled
     }

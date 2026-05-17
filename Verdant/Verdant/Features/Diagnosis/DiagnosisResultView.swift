@@ -40,7 +40,10 @@ struct DiagnosisResultView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    if !isSaved { showSaveSheet = true }
+                    if !isSaved {
+                        Haptics.impact(.light)
+                        showSaveSheet = true
+                    }
                 } label: {
                     Image(systemName: isSaved ? "heart.fill" : "heart")
                         .foregroundStyle(isSaved ? Color.terracotta : Color.forestGreen)
@@ -269,6 +272,7 @@ struct DiagnosisResultView: View {
     private var alternativesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Button {
+                Haptics.selection()
                 withAnimation(.easeInOut(duration: 0.25)) {
                     showAlternatives.toggle()
                 }

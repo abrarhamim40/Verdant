@@ -185,6 +185,7 @@ struct ScanView: View {
 
     private var identifyButton: some View {
         Button {
+            Haptics.impact(.medium)
             let imagesData = photos.map(\.optimizedData)
             activeScan = ScanRequest(images: imagesData)
         } label: {
@@ -224,7 +225,7 @@ struct ScanView: View {
 
     private func loadPhotos(from items: [PhotosPickerItem]) async {
         guard !items.isEmpty else {
-            photos.removeAll()
+            withAnimation(.easeInOut(duration: 0.25)) { photos.removeAll() }
             return
         }
 
@@ -251,12 +252,16 @@ struct ScanView: View {
             }
         }
 
-        photos = loaded
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            photos = loaded
+        }
+        if !loaded.isEmpty { Haptics.selection() }
     }
 
     private func appendCapturedImage(_ image: UIImage) async {
         guard photos.count < Self.maxPhotos else { return }
         guard let optimized = image.optimizeForAPI() else {
+            Haptics.error()
             errorMessage = "Couldn't process that photo. Try again with better lighting."
             return
         }
@@ -266,11 +271,17 @@ struct ScanView: View {
             optimizedData: optimized,
             displayImage: image
         )
-        photos.append(captured)
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+            photos.append(captured)
+        }
+        Haptics.selection()
     }
 
     private func remove(_ photo: ScanPhoto) {
-        photos.removeAll { $0.id == photo.id }
+        Haptics.selection()
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            photos.removeAll { $0.id == photo.id }
+        }
         if let item = photo.pickerItem {
             pickerItems.removeAll { $0 == item }
         }
