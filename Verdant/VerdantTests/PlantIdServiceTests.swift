@@ -13,22 +13,25 @@ struct PlantIdServiceTests {
 
     // MARK: - Codable roundtrip
 
-    @Test func requestEncodesWithSnakeCaseKeys() throws {
+    @Test func requestEncodesOnlyImagesAndLocation() throws {
+        // Plant.id v3: body is minimal (images + lat/lon). Feature flags
+        // like similar_images / health / classification_level live on the
+        // URL query string, not in the body. See PlantIdService.identify.
         let request = PlantIdRequest(
             images: ["base64data"],
             latitude: 23.81,
-            longitude: 90.41,
-            similarImages: true,
-            healthAssessment: true,
-            classificationLevel: "all"
+            longitude: 90.41
         )
 
         let data = try JSONEncoder().encode(request)
         let json = try #require(String(data: data, encoding: .utf8))
 
-        #expect(json.contains("\"similar_images\":true"))
-        #expect(json.contains("\"health_assessment\":true"))
-        #expect(json.contains("\"classification_level\":\"all\""))
+        #expect(json.contains("\"images\":[\"base64data\"]"))
+        #expect(json.contains("\"latitude\":23.81"))
+        #expect(json.contains("\"longitude\":90.41"))
+        #expect(json.contains("similar_images") == false)
+        #expect(json.contains("health_assessment") == false)
+        #expect(json.contains("classification_level") == false)
     }
 
     @Test func responseDecodesSampleFixture() throws {

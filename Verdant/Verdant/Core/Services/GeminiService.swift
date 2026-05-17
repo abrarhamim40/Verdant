@@ -19,7 +19,7 @@ actor GeminiService {
 
     init(
         apiKey: String? = nil,
-        model: String = "gemini-2.5-pro",
+        model: String = "gemini-2.5-flash",
         session: URLSession? = nil
     ) {
         self.apiKey = apiKey ?? APIKeys.gemini
@@ -55,8 +55,10 @@ actor GeminiService {
             contents: [.init(parts: [.init(text: prompt)])],
             generationConfig: .init(
                 temperature: 0.7,
-                maxOutputTokens: 1024,
-                responseMimeType: "application/json"
+                maxOutputTokens: 2048,
+                responseMimeType: "application/json",
+                // Disable thinking — for structured JSON we want direct output, not reasoning tokens.
+                thinkingConfig: .init(thinkingBudget: 0)
             )
         )
 
@@ -68,6 +70,13 @@ actor GeminiService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try encoder.encode(body)
+
+        #if DEBUG
+        Logger.ai.debug("Gemini URL: https://generativelanguage.googleapis.com/v1beta/models/\(self.model, privacy: .public):generateContent")
+        if let bodyStr = String(data: request.httpBody ?? Data(), encoding: .utf8) {
+            Logger.ai.debug("Gemini request body: \(bodyStr, privacy: .public)")
+        }
+        #endif
 
         let started = Date()
         Logger.ai.info("Gemini request started")
@@ -87,19 +96,36 @@ actor GeminiService {
             throw AIError.networkError
         }
 
+        #if DEBUG
+        if let bodyStr = String(data: data, encoding: .utf8) {
+            Logger.ai.debug("Gemini response [\(http.statusCode)]: \(bodyStr, privacy: .public)")
+        }
+        #endif
+
         switch http.statusCode {
         case 200, 201:
             return try Self.parseGeminiResponse(data, decoder: decoder)
         case 400:
+            Self.logErrorBody(data, status: 400)
             throw AIError.invalidInput
         case 401, 403:
+            Self.logErrorBody(data, status: http.statusCode)
             throw AIError.invalidAPIKey
         case 429:
+            Self.logErrorBody(data, status: 429)
             throw AIError.rateLimited
         case 500...599:
+            Self.logErrorBody(data, status: http.statusCode)
             throw AIError.serverError
         default:
+            Self.logErrorBody(data, status: http.statusCode)
             throw AIError.unknownError(http.statusCode)
+        }
+    }
+
+    nonisolated private static func logErrorBody(_ data: Data, status: Int) {
+        if let body = String(data: data, encoding: .utf8) {
+            Logger.ai.error("Gemini \(status) body: \(body, privacy: .public)")
         }
     }
 
@@ -176,7 +202,17 @@ actor GeminiService {
             throw AIError.invalidResponse
         }
 
-        guard let rawText = response.candidates.first?.content.parts.first?.text else {
+        guard let candidate = response.candidates.first else {
+            throw AIError.invalidResponse
+        }
+
+        // Output got truncated — token budget too low or thinking consumed it.
+        if candidate.finishReason == "MAX_TOKENS" {
+            Logger.ai.error("Gemini truncated at MAX_TOKENS — bump maxOutputTokens or disable thinking")
+            throw AIError.parsingFailed
+        }
+
+        guard let rawText = candidate.content.parts.first?.text else {
             throw AIError.invalidResponse
         }
 

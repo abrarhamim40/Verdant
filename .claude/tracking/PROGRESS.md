@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 2 Day 9 — Live camera + guidance overlay on `feat/scan-camera-overlay` (Xcode registration + Info.plist key pending)
-**Days until launch:** 68 days
-**Last session:** 2026-05-17 — Day 8 merged; Day 9 CameraPicker (UIVC bridge) + PhotoGuidanceTips + ScanView now offers Camera/Library buttons side-by-side, toolbar lightbulb for tips sheet
-**Next task:** Register 2 new files in Xcode, add NSCameraUsageDescription to Info, build + run, then Day 10-11 (ScanningView with progress states + wire to AIService).
+**Current Status:** 🟢 Week 2 Day 10-11 — Scanning flow on `feat/scanning-flow` (Xcode registration pending)
+**Days until launch:** 67 days
+**Last session:** 2026-05-17 — Day 9 merged; Day 10-11 ScanningView with full state machine (running / success / failure / cancelled) wired to AIService.shared.analyzePlant, ScanRequest navigation, cancel button, retry button, placeholder result card
+**Next task:** Register 2 new files in Xcode → real end-to-end test: pick photos → tap Identify → see loading → real Plant.id + Gemini response → Day 12-13 (full DiagnosisResultView).
 
 ---
 
@@ -59,7 +59,7 @@
 Week 2:
 - [x] Day 8: ScanView with PhotosPicker (1-3 photos), photo grid + remove × per card, image optimization wired (UIImage → 1024px JPEG Data), placeholder Identify button
 - [x] Day 9: Live camera (CameraPicker UIVC bridge, simulator falls back to library), PhotoGuidanceTips component (4 composition tips card), toolbar lightbulb opens medium-detent sheet
-- [ ] Day 10-11: ScanningView with states
+- [x] Day 10-11: ScanningView state machine (running / success / failure / cancelled) + cycling status messages + cancel button + retry on error + AIService end-to-end wired + ScanRequest navigation type
 - [ ] Day 12-13: DiagnosisResultView + confidence
 - [ ] Day 14: Save to plants flow
 
