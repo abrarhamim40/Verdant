@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 3 Day 15-16 — Treatment + citations on `feat/treatment-citations` (Xcode registration pending)
+**Current Status:** 🟢 Week 3 Day 17-18 — Vision pre-filter polish on `feat/vision-prefilter` (Xcode registration pending)
 **Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 14 merged; Day 15-16 extracted TreatmentStepsView (reusable, compact variant), added SourceCitationsView (Wikipedia link + license + AI-generated flag), extended PlantAnalysisResult.details so the citation card surfaces real article URLs
-**Next task:** Register 2 new files in Xcode → rescan a plant → see Sources section with tap-to-Wikipedia + license attribution → Day 17-18 (Apple Vision pre-filter already built Day 6, verify wired into AIService — should be no-op).
+**Last session:** 2026-05-17 — Day 15-16 merged; Day 17-18 AppleVisionService refactored (nonisolated static keyword set + threshold + pure `detectsPlant` helper), DEBUG top-5 classification logging, AIService now checks all images (any pass = accept) instead of just images[0], 8 unit tests for keyword matching
+**Next task:** Register 1 test file in Xcode → run 35 tests → smoke test with a non-plant photo (should hit `noPlantDetected` friendly error before Plant.id call) → Day 19 (multi-angle improvement — increase Plant.id accuracy by sending 2-3 angles).
 
 ---
 
@@ -65,6 +65,7 @@ Week 2:
 
 Week 3:
 - [x] Day 15-16: TreatmentStepsView (reusable, compact mode for detail screen) + SourceCitationsView (Plant.id v3 attribution + Wikipedia tap link + CC BY-SA license + AI-generated flag), PlantAnalysisResult now carries top match's PlantDetails so citations link the right article
+- [x] Day 17-18: Vision pre-filter polish — nonisolated static keyword set/threshold/`detectsPlant` helper (testable), DEBUG top-5 classification logging, AIService checks all images instead of just first one, 8 unit tests
 - [ ] Day 14: Save to plants flow
 
 Week 3:

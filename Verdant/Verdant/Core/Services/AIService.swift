@@ -45,10 +45,12 @@ actor AIService {
             throw AIError.invalidInput
         }
 
-        // 1. Free on-device pre-filter — block non-plant photos early.
-        let isPlant = await vision.containsPlant(imageData: images[0])
+        // 1. Free on-device pre-filter — block obvious non-plant photos early.
+        // Check every photo; if any one looks plant-like we proceed (a stray finger
+        // shot in slot 0 shouldn't kill an otherwise-valid scan).
+        let isPlant = await vision.anyImageContainsPlant(imageData: images)
         guard isPlant else {
-            Logger.ai.info("Apple Vision: no plant detected in first image")
+            Logger.ai.info("Apple Vision: no plant detected in any of \(images.count) image(s)")
             throw AIError.noPlantDetected
         }
 
