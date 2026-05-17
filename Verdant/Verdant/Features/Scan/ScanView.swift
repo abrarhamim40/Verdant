@@ -21,6 +21,7 @@ struct ScanView: View {
     @State private var showCamera = false
     @State private var showTipsSheet = false
     @State private var errorMessage: String?
+    @State private var activeScan: ScanRequest?
 
     var body: some View {
         NavigationStack {
@@ -38,6 +39,9 @@ struct ScanView: View {
             .navigationTitle("Scan")
             .navigationBarTitleDisplayMode(.large)
             .toolbar { toolbarContent }
+            .navigationDestination(item: $activeScan) { request in
+                ScanningView(request: request)
+            }
             .fullScreenCover(isPresented: $showCamera) {
                 CameraPicker(
                     onCapture: { image in
@@ -181,7 +185,8 @@ struct ScanView: View {
 
     private var identifyButton: some View {
         Button {
-            errorMessage = "Identify pipeline lands Day 10-11. Photo data ready (\(photos.count) optimized image\(photos.count == 1 ? "" : "s"))."
+            let imagesData = photos.map(\.optimizedData)
+            activeScan = ScanRequest(images: imagesData)
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "wand.and.stars")

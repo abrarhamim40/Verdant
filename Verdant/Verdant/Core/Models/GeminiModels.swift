@@ -27,11 +27,21 @@ nonisolated struct GeminiRequest: Codable, Sendable {
         let temperature: Double
         let maxOutputTokens: Int
         let responseMimeType: String
+        let thinkingConfig: ThinkingConfig?
 
         enum CodingKeys: String, CodingKey {
             case temperature
             case maxOutputTokens = "max_output_tokens"
             case responseMimeType = "response_mime_type"
+            case thinkingConfig = "thinking_config"
+        }
+    }
+
+    struct ThinkingConfig: Codable, Sendable {
+        let thinkingBudget: Int
+
+        enum CodingKeys: String, CodingKey {
+            case thinkingBudget = "thinking_budget"
         }
     }
 }
@@ -43,6 +53,12 @@ nonisolated struct GeminiResponse: Codable, Sendable {
 
     struct Candidate: Codable, Sendable {
         let content: Content
+        let finishReason: String?
+
+        enum CodingKeys: String, CodingKey {
+            case content
+            case finishReason
+        }
     }
 
     struct Content: Codable, Sendable {

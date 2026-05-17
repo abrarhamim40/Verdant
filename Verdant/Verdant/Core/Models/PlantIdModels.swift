@@ -15,15 +15,9 @@ nonisolated struct PlantIdRequest: Codable, Sendable {
     let images: [String]
     let latitude: Double?
     let longitude: Double?
-    let similarImages: Bool
-    let healthAssessment: Bool
-    let classificationLevel: String
 
     enum CodingKeys: String, CodingKey {
         case images, latitude, longitude
-        case similarImages = "similar_images"
-        case healthAssessment = "health_assessment"
-        case classificationLevel = "classification_level"
     }
 }
 

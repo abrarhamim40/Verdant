@@ -56,17 +56,37 @@ actor PlantIdService {
         let body = PlantIdRequest(
             images: images.map { $0.base64EncodedString() },
             latitude: location?.latitude,
-            longitude: location?.longitude,
-            similarImages: true,
-            healthAssessment: true,
-            classificationLevel: "all"
+            longitude: location?.longitude
         )
 
-        var request = URLRequest(url: baseURL.appendingPathComponent("identification"))
+        // Plant.id v3 — request body is minimal; response/feature controls go on query string.
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("identification"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "details", value: "common_names,url,description,taxonomy,watering"),
+            URLQueryItem(name: "language", value: "en"),
+            URLQueryItem(name: "classification_level", value: "all"),
+            URLQueryItem(name: "health", value: "all"),
+            URLQueryItem(name: "similar_images", value: "true"),
+        ]
+
+        guard let url = components.url else {
+            throw AIError.invalidInput
+        }
+
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "Api-Key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try encoder.encode(body)
+
+        #if DEBUG
+        Logger.ai.debug("Plant.id URL: \(url.absoluteString, privacy: .public)")
+        // Body has base64 image data — log only sizes, not the bytes (would flood Console).
+        Logger.ai.debug("Plant.id body: images=\(body.images.count) sizes=\(body.images.map { $0.count }) lat=\(body.latitude?.description ?? "nil") lon=\(body.longitude?.description ?? "nil")")
+        #endif
 
         let started = Date()
         Logger.ai.info("Plant.id request started")
@@ -86,6 +106,14 @@ actor PlantIdService {
             throw AIError.networkError
         }
 
+        #if DEBUG
+        if let bodyStr = String(data: data, encoding: .utf8) {
+            // Truncate huge success responses to first 2000 chars to keep Console readable.
+            let preview = bodyStr.count > 2000 ? String(bodyStr.prefix(2000)) + "…[truncated, total \(bodyStr.count) chars]" : bodyStr
+            Logger.ai.debug("Plant.id response [\(http.statusCode)]: \(preview, privacy: .public)")
+        }
+        #endif
+
         switch http.statusCode {
         case 200, 201:
             do {
@@ -96,14 +124,25 @@ actor PlantIdService {
                 Logger.ai.error("Plant.id decode failed: \(error.localizedDescription, privacy: .public)")
                 throw AIError.parsingFailed
             }
+        case 400:
+            Self.logErrorBody(data, status: 400)
+            throw AIError.invalidInput
         case 401:
+            Self.logErrorBody(data, status: 401)
             throw AIError.invalidAPIKey
         case 429:
             throw AIError.rateLimited
         case 500...599:
             throw AIError.serverError
         default:
+            Self.logErrorBody(data, status: http.statusCode)
             throw AIError.unknownError(http.statusCode)
+        }
+    }
+
+    nonisolated private static func logErrorBody(_ data: Data, status: Int) {
+        if let body = String(data: data, encoding: .utf8) {
+            Logger.ai.error("Plant.id \(status) body: \(body, privacy: .public)")
         }
     }
 

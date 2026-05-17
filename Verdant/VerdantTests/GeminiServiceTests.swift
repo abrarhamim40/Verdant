@@ -148,7 +148,8 @@ struct GeminiServiceTests {
                 "parts": [
                   { "text": "{\\"summary\\":\\"s\\",\\"immediate_actions\\":[],\\"weekly_care\\":[],\\"warning_signs\\":[],\\"recovery_timeline\\":\\"r\\",\\"prevention_tips\\":[],\\"watering_frequency_days\\":7,\\"fertilizing_frequency_days\\":30}" }
                 ]
-              }
+              },
+              "finishReason": "STOP"
             }
           ]
         }
@@ -156,5 +157,23 @@ struct GeminiServiceTests {
         let data = try #require(envelope.data(using: .utf8))
         let plan = try GeminiService.parseGeminiResponse(data, decoder: JSONDecoder())
         #expect(plan.summary == "s")
+    }
+
+    @Test func parseGeminiResponseThrowsOnMaxTokens() throws {
+        // Mimics gemini-2.5-flash truncating with thinking enabled and a small output budget.
+        let envelope = """
+        {
+          "candidates": [
+            {
+              "content": { "parts": [{ "text": "{\\"summary\\":\\"Incomplete" }] },
+              "finishReason": "MAX_TOKENS"
+            }
+          ]
+        }
+        """
+        let data = try #require(envelope.data(using: .utf8))
+        #expect(throws: AIError.parsingFailed) {
+            _ = try GeminiService.parseGeminiResponse(data, decoder: JSONDecoder())
+        }
     }
 }
