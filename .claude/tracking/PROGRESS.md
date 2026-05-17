@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 2 Day 12-13 — DiagnosisResultView on `feat/diagnosis-result` (Xcode registration pending)
+**Current Status:** 🟢 Week 2 Day 14 — Save flow on `feat/save-plant` (Xcode registration pending)
 **Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 10-11 merged with verified end-to-end (Butea monosperma 80%, Gemini flash JSON ok); Day 12-13 ConfidenceScoreView (ring/pill) + HealthBadge (4 states) + full DiagnosisResultView (photo header, identification, disease, treatment, warnings, prevention, alt matches collapsible)
-**Next task:** Register 3 new files in Xcode → rescan to see full diagnosis screen → Day 14 (Save to plants flow — wires HealthBadge save button to SwiftData).
+**Last session:** 2026-05-17 — Day 12-13 merged; Day 14 SavePlantSheet (Form-based) + heart toolbar wiring with `heart` ↔ `heart.fill` transition + success haptic + minimal MyPlants list (Spartan rows, Day 22-23 will replace with real grid)
+**Next task:** Register 1 new file (SavePlantSheet.swift) → rescan + tap heart → fill form → Save → verify entry in My Plants tab → end of Week 2 review.
 
 ---
 
@@ -61,7 +61,7 @@ Week 2:
 - [x] Day 9: Live camera (CameraPicker UIVC bridge, simulator falls back to library), PhotoGuidanceTips component (4 composition tips card), toolbar lightbulb opens medium-detent sheet
 - [x] Day 10-11: ScanningView state machine (running / success / failure / cancelled) + cycling status messages + cancel button + retry on error + AIService end-to-end wired + ScanRequest navigation type
 - [x] Day 12-13: DiagnosisResultView (photo header + identification + disease + treatment + warnings + prevention + collapsible alternatives) + ConfidenceScoreView (ring/pill) + HealthBadge (healthy/watch/treat/critical) components
-- [ ] Day 14: Save to plants flow
+- [x] Day 14: SavePlantSheet (nickname + location + sunlight + indoor/outdoor + grow light) writes Plant + PlantScan to SwiftData with success haptic, heart toolbar toggles `heart` ↔ `heart.fill`, minimal MyPlants list + tap → PlantDetailView (photo + care setup + latest scan analysis decoded from analysisJSON + relative date) — Day 22-25 will replace both with full grid + history timeline + edit
 - [ ] Day 14: Save to plants flow
 
 Week 3:
