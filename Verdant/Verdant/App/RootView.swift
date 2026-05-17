@@ -51,14 +51,54 @@ private struct HomeTabPlaceholder: View {
 }
 
 private struct MyPlantsTabPlaceholder: View {
+    @Query(sort: \Plant.dateAdded, order: .reverse) private var plants: [Plant]
+
     var body: some View {
         NavigationStack {
-            ContentUnavailableView(
-                "My Plants",
-                systemImage: "leaf",
-                description: Text("Week 4 deliverable.")
-            )
-            .navigationTitle("My Plants")
+            if plants.isEmpty {
+                ContentUnavailableView(
+                    "No plants yet",
+                    systemImage: "leaf",
+                    description: Text("Scan a plant and tap the heart to save it here.")
+                )
+                .navigationTitle("My Plants")
+            } else {
+                List(plants) { plant in
+                    NavigationLink(value: plant.id) {
+                        HStack(spacing: 14) {
+                            if let data = plant.imageData, let image = UIImage(data: data) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 56, height: 56)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            } else {
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color.sage.opacity(0.3))
+                                    .frame(width: 56, height: 56)
+                                    .overlay(Image(systemName: "leaf").foregroundStyle(Color.forestGreen))
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(plant.displayName)
+                                    .font(.body.weight(.semibold))
+                                if let location = plant.location, !location.isEmpty {
+                                    Text(location)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                .navigationTitle("My Plants (\(plants.count))")
+                .navigationDestination(for: UUID.self) { id in
+                    if let plant = plants.first(where: { $0.id == id }) {
+                        PlantDetailView(plant: plant)
+                    }
+                }
+            }
         }
     }
 }

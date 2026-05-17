@@ -15,6 +15,8 @@ struct DiagnosisResultView: View {
     let primaryPhotoData: Data?
 
     @State private var showAlternatives = false
+    @State private var showSaveSheet = false
+    @State private var isSaved = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -31,12 +33,22 @@ struct DiagnosisResultView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    // Day 14 wires this to "save to My Plants" sheet.
+                    if !isSaved { showSaveSheet = true }
                 } label: {
-                    Image(systemName: "heart")
+                    Image(systemName: isSaved ? "heart.fill" : "heart")
+                        .foregroundStyle(isSaved ? Color.terracotta : Color.forestGreen)
+                        .contentTransition(.symbolEffect(.replace))
                 }
-                .accessibilityLabel("Save to My Plants")
+                .accessibilityLabel(isSaved ? "Saved to My Plants" : "Save to My Plants")
+                .disabled(isSaved)
             }
+        }
+        .sheet(isPresented: $showSaveSheet) {
+            SavePlantSheet(
+                result: result,
+                primaryPhotoData: primaryPhotoData,
+                onSaved: { isSaved = true }
+            )
         }
     }
 
