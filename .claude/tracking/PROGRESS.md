@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 2 Day 14 — Save flow on `feat/save-plant` (Xcode registration pending)
+**Current Status:** 🟢 Week 3 Day 15-16 — Treatment + citations on `feat/treatment-citations` (Xcode registration pending)
 **Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 12-13 merged; Day 14 SavePlantSheet (Form-based) + heart toolbar wiring with `heart` ↔ `heart.fill` transition + success haptic + minimal MyPlants list (Spartan rows, Day 22-23 will replace with real grid)
-**Next task:** Register 1 new file (SavePlantSheet.swift) → rescan + tap heart → fill form → Save → verify entry in My Plants tab → end of Week 2 review.
+**Last session:** 2026-05-17 — Day 14 merged; Day 15-16 extracted TreatmentStepsView (reusable, compact variant), added SourceCitationsView (Wikipedia link + license + AI-generated flag), extended PlantAnalysisResult.details so the citation card surfaces real article URLs
+**Next task:** Register 2 new files in Xcode → rescan a plant → see Sources section with tap-to-Wikipedia + license attribution → Day 17-18 (Apple Vision pre-filter already built Day 6, verify wired into AIService — should be no-op).
 
 ---
 
@@ -62,6 +62,9 @@ Week 2:
 - [x] Day 10-11: ScanningView state machine (running / success / failure / cancelled) + cycling status messages + cancel button + retry on error + AIService end-to-end wired + ScanRequest navigation type
 - [x] Day 12-13: DiagnosisResultView (photo header + identification + disease + treatment + warnings + prevention + collapsible alternatives) + ConfidenceScoreView (ring/pill) + HealthBadge (healthy/watch/treat/critical) components
 - [x] Day 14: SavePlantSheet (nickname + location + sunlight + indoor/outdoor + grow light) writes Plant + PlantScan to SwiftData with success haptic, heart toolbar toggles `heart` ↔ `heart.fill`, minimal MyPlants list + tap → PlantDetailView (photo + care setup + latest scan analysis decoded from analysisJSON + relative date) — Day 22-25 will replace both with full grid + history timeline + edit
+
+Week 3:
+- [x] Day 15-16: TreatmentStepsView (reusable, compact mode for detail screen) + SourceCitationsView (Plant.id v3 attribution + Wikipedia tap link + CC BY-SA license + AI-generated flag), PlantAnalysisResult now carries top match's PlantDetails so citations link the right article
 - [ ] Day 14: Save to plants flow
 
 Week 3:

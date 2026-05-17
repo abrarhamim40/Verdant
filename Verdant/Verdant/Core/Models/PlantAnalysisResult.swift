@@ -15,6 +15,7 @@ nonisolated struct PlantAnalysisResult: Codable, Sendable, Identifiable {
     let commonNames: [String]
     let scientificName: String?
     let confidence: Double
+    let details: PlantDetails?
     let disease: DiseaseSuggestion?
     let treatment: TreatmentPlan
     let alternativeMatches: [PlantSuggestion]
@@ -26,6 +27,7 @@ nonisolated struct PlantAnalysisResult: Codable, Sendable, Identifiable {
         commonNames: [String],
         scientificName: String?,
         confidence: Double,
+        details: PlantDetails? = nil,
         disease: DiseaseSuggestion?,
         treatment: TreatmentPlan,
         alternativeMatches: [PlantSuggestion],
@@ -36,6 +38,7 @@ nonisolated struct PlantAnalysisResult: Codable, Sendable, Identifiable {
         self.commonNames = commonNames
         self.scientificName = scientificName
         self.confidence = confidence
+        self.details = details
         self.disease = disease
         self.treatment = treatment
         self.alternativeMatches = alternativeMatches

@@ -104,6 +104,7 @@ struct DiagnosisResultView: View {
             if !result.alternativeMatches.isEmpty {
                 alternativesSection
             }
+            SourceCitationsView(plantDetails: result.details)
             Spacer(minLength: 32)
         }
         .padding(20)
@@ -191,28 +192,7 @@ struct DiagnosisResultView: View {
     private var treatmentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Care plan", icon: "drop.fill", tint: .forestGreen)
-            Text(result.treatment.summary)
-                .font(.body)
-            HStack(spacing: 12) {
-                frequencyChip(icon: "drop", label: "Water", days: result.treatment.wateringFrequencyDays)
-                frequencyChip(icon: "sparkles", label: "Feed", days: result.treatment.fertilizingFrequencyDays)
-            }
-            if !result.treatment.immediateActions.isEmpty {
-                actionList(title: "Do this now", items: result.treatment.immediateActions)
-            }
-            if !result.treatment.weeklyCare.isEmpty {
-                actionList(title: "Every week", items: result.treatment.weeklyCare)
-            }
-            if !result.treatment.recoveryTimeline.isEmpty {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "clock.fill")
-                        .foregroundStyle(Color.sage)
-                    Text(result.treatment.recoveryTimeline)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.top, 6)
-            }
+            TreatmentStepsView(plan: result.treatment)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -325,27 +305,4 @@ struct DiagnosisResultView: View {
         }
     }
 
-    private func actionList(title: String, items: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .padding(.top, 4)
-            ForEach(items, id: \.self) { item in
-                bulletRow(item, color: .forestGreen)
-            }
-        }
-    }
-
-    private func frequencyChip(icon: String, label: String, days: Int) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .foregroundStyle(Color.forestGreen)
-            Text("\(label) · \(days)d")
-                .font(.subheadline.weight(.medium))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.6))
-        .clipShape(Capsule())
-    }
 }

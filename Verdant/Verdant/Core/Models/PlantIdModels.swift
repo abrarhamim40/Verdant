@@ -81,6 +81,14 @@ nonisolated struct Watering: Codable, Sendable {
 nonisolated struct PlantDescription: Codable, Sendable {
     let value: String?
     let citation: String?
+    let licenseName: String?
+    let licenseUrl: String?
+
+    enum CodingKeys: String, CodingKey {
+        case value, citation
+        case licenseName = "license_name"
+        case licenseUrl = "license_url"
+    }
 }
 
 nonisolated struct DiseaseAssessment: Codable, Sendable {

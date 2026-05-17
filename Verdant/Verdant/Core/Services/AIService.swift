@@ -85,6 +85,7 @@ actor AIService {
             commonNames: topPlant.details?.commonNames ?? [],
             scientificName: topPlant.details?.taxonomy?.species,
             confidence: topPlant.probability,
+            details: topPlant.details,
             disease: disease,
             treatment: treatment,
             alternativeMatches: Array(identification.result.classification.suggestions.dropFirst().prefix(3))
