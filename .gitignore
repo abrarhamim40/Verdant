@@ -306,3 +306,10 @@ draft-*.md
 
 # graphify knowledge graph output (regenerable, large)
 graphify-out/
+
+# Root-level test photos (drop test images alongside repo, not in it)
+/*.jpeg
+/*.jpg
+/*.png
+/*.heic
+/WhatsApp*
