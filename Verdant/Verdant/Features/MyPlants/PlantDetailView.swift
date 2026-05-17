@@ -165,6 +165,19 @@ struct PlantDetailView: View {
                         .foregroundStyle(.secondary)
                     Text(analysis.plantName)
                         .font(.body.weight(.semibold))
+                    if let scan = latestScan, scan.photoCount > 1 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.stack.3d.up.fill")
+                                .font(.caption2)
+                            Text("\(scan.photoCount) angles")
+                                .font(.caption.weight(.medium))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.sage.opacity(0.20))
+                        .foregroundStyle(Color.forestGreen)
+                        .clipShape(Capsule())
+                    }
                 }
                 Spacer()
                 ConfidenceScoreView(confidence: analysis.confidence)

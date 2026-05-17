@@ -13,11 +13,18 @@ import SwiftUI
 struct DiagnosisResultView: View {
     let result: PlantAnalysisResult
     let primaryPhotoData: Data?
+    let photoCount: Int
 
     @State private var showAlternatives = false
     @State private var showSaveSheet = false
     @State private var isSaved = false
     @Environment(\.dismiss) private var dismiss
+
+    init(result: PlantAnalysisResult, primaryPhotoData: Data?, photoCount: Int = 1) {
+        self.result = result
+        self.primaryPhotoData = primaryPhotoData
+        self.photoCount = photoCount
+    }
 
     var body: some View {
         ScrollView {
@@ -47,6 +54,7 @@ struct DiagnosisResultView: View {
             SavePlantSheet(
                 result: result,
                 primaryPhotoData: primaryPhotoData,
+                photoCount: photoCount,
                 onSaved: { isSaved = true }
             )
         }
@@ -129,8 +137,13 @@ struct DiagnosisResultView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
-                HealthBadge(status: HealthBadge.Status(result: result))
-                    .padding(.top, 6)
+                HStack(spacing: 8) {
+                    HealthBadge(status: HealthBadge.Status(result: result))
+                    if photoCount > 1 {
+                        multiAngleBadge
+                    }
+                }
+                .padding(.top, 6)
             }
             Spacer(minLength: 12)
             ConfidenceScoreView(confidence: result.confidence)
@@ -139,6 +152,21 @@ struct DiagnosisResultView: View {
 
     private var displayName: String {
         result.commonNames.first ?? result.plantName
+    }
+
+    private var multiAngleBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "square.stack.3d.up.fill")
+                .font(.caption)
+            Text("\(photoCount) angles")
+                .font(.subheadline.weight(.semibold))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.sage.opacity(0.18))
+        .foregroundStyle(Color.forestGreen)
+        .clipShape(Capsule())
+        .accessibilityLabel("Identified using \(photoCount) photos")
     }
 
     private var commonNamesExcludingPrimary: [String] {

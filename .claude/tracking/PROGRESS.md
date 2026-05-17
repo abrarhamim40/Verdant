@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 3 Day 17-18 — Vision pre-filter polish on `feat/vision-prefilter` (Xcode registration pending)
+**Current Status:** 🟢 Week 3 Day 19 — Multi-angle improvement on `feat/multi-angle` (Xcode registration pending)
 **Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 15-16 merged; Day 17-18 AppleVisionService refactored (nonisolated static keyword set + threshold + pure `detectsPlant` helper), DEBUG top-5 classification logging, AIService now checks all images (any pass = accept) instead of just images[0], 8 unit tests for keyword matching
-**Next task:** Register 1 test file in Xcode → run 35 tests → smoke test with a non-plant photo (should hit `noPlantDetected` friendly error before Plant.id call) → Day 19 (multi-angle improvement — increase Plant.id accuracy by sending 2-3 angles).
+**Last session:** 2026-05-17 — Day 17-18 merged; Day 19 threaded real `photoCount` through DiagnosisResultView → SavePlantSheet → PlantScan model (was hardcoded 1), added "X angles" badge on diagnosis + plant detail when ≥2 photos used
+**Next task:** Build → 2-photo scan → see multi-angle badge → save → My Plants → tap → detail also shows badge → Day 20-21 (Polish scan flow: animations, haptics, empty states, test 20+ plants).
 
 ---
 
@@ -66,6 +66,7 @@ Week 2:
 Week 3:
 - [x] Day 15-16: TreatmentStepsView (reusable, compact mode for detail screen) + SourceCitationsView (Plant.id v3 attribution + Wikipedia tap link + CC BY-SA license + AI-generated flag), PlantAnalysisResult now carries top match's PlantDetails so citations link the right article
 - [x] Day 17-18: Vision pre-filter polish — nonisolated static keyword set/threshold/`detectsPlant` helper (testable), DEBUG top-5 classification logging, AIService checks all images instead of just first one, 8 unit tests
+- [x] Day 19: Multi-angle improvement — Plant.id was already getting all photos; threaded real `photoCount` through ScanningView → DiagnosisResultView → SavePlantSheet → PlantScan (was hardcoded 1/false), "X angles" badge surfaces on diagnosis + plant detail when ≥2 photos used
 - [ ] Day 14: Save to plants flow
 
 Week 3:
