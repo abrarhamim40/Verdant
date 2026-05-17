@@ -27,6 +27,27 @@ nonisolated struct PlantIdResponse: Codable, Sendable {
     let result: PlantIdResult
 }
 
+/// Response from the separate `/api/v3/health_assessment` endpoint.
+/// Same `disease` shape Plant.id has used for years — reuses our existing DiseaseAssessment.
+nonisolated struct HealthAssessmentResponse: Codable, Sendable {
+    let result: HealthAssessmentResult
+}
+
+nonisolated struct HealthAssessmentResult: Codable, Sendable {
+    let disease: DiseaseAssessment?
+    let isHealthy: HealthProbability?
+
+    enum CodingKeys: String, CodingKey {
+        case disease
+        case isHealthy = "is_healthy"
+    }
+}
+
+nonisolated struct HealthProbability: Codable, Sendable {
+    let probability: Double
+    let binary: Bool?
+}
+
 nonisolated struct PlantIdResult: Codable, Sendable {
     let isPlant: ProbabilityResult
     let classification: Classification
