@@ -86,7 +86,9 @@ struct GeminiServiceTests {
         #expect(prompt.contains("Fungal lesions"))
     }
 
-    @Test func promptSaysHealthyWhenNoDisease() {
+    @Test func promptHedgesWhenNoDiseaseFlagged() {
+        // We deliberately don't say "the plant is healthy" — Plant.id missing a disease
+        // doesn't prove absence. The prompt should ask Gemini to keep this uncertainty.
         let prompt = GeminiService.buildPrompt(
             plantName: "Aloe",
             commonNames: [],
@@ -94,7 +96,9 @@ struct GeminiServiceTests {
             language: "English",
             climate: nil
         )
-        #expect(prompt.contains("Plant appears healthy"))
+        #expect(prompt.contains("No specific disease was flagged"))
+        #expect(prompt.contains("not detected") || prompt.contains("not flagged") || prompt.contains("possible"))
+        #expect(prompt.contains("warning signs"))
     }
 
     @Test func promptIncludesClimateWhenProvided() {

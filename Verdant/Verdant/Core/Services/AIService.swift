@@ -62,15 +62,25 @@ actor AIService {
             return result
         }
 
-        // 3. Plant.id identification.
-        let identification = try await plantId.identify(images: images, location: location)
+        // 3. Plant.id identification + (in parallel) health assessment.
+        // Health is a separate Plant.id endpoint that often requires a paid tier;
+        // we treat any failure as graceful degradation so the scan still completes.
+        async let identificationTask = plantId.identify(images: images, location: location)
+        async let healthTask = healthOrNil(images: images, location: location)
+
+        let identification = try await identificationTask
+        let healthAssessment = await healthTask
 
         guard let topPlant = identification.result.classification.suggestions.first else {
             throw AIError.identificationFailed
         }
 
-        let disease = identification.result.disease?.suggestions
+        let inlineDisease = identification.result.disease?.suggestions
             .first(where: { $0.probability > diseaseThreshold })
+        let separateDisease = healthAssessment?.suggestions
+            .first(where: { $0.probability > diseaseThreshold })
+        // Prefer the dedicated health endpoint's result when available (more thorough).
+        let disease = separateDisease ?? inlineDisease
 
         // 4. Gemini treatment plan (personalized to plant + disease + language + climate).
         let treatment = try await gemini.generateTreatment(
@@ -100,6 +110,22 @@ actor AIService {
 
         Logger.ai.info("Analysis complete: \(topPlant.name, privacy: .public) at \(Int(topPlant.probability * 100))%")
         return result
+    }
+
+    /// Wraps Plant.id health_assessment so a paid-tier or 403 error doesn't kill the scan.
+    private func healthOrNil(
+        images: [Data],
+        location: CLLocationCoordinate2D?
+    ) async -> DiseaseAssessment? {
+        do {
+            return try await plantId.assessHealth(images: images, location: location)
+        } catch let error as AIError {
+            Logger.ai.info("Plant.id health unavailable (\(error.errorDescription ?? "error", privacy: .public)) — degrading to ID-only")
+            return nil
+        } catch {
+            Logger.ai.info("Plant.id health failed: \(error.localizedDescription, privacy: .public) — degrading to ID-only")
+            return nil
+        }
     }
 
     /// Deterministic key: identical inputs (photos + language + climate) hit cache for 24h.

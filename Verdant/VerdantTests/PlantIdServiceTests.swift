@@ -101,6 +101,54 @@ struct PlantIdServiceTests {
         #expect(response.result.classification.suggestions.isEmpty)
     }
 
+    // MARK: - Health assessment endpoint (separate Plant.id v3 endpoint)
+
+    @Test func healthAssessmentDecodesBotrytisFixture() throws {
+        // Real shape returned by /api/v3/health_assessment for a diseased Dahlia.
+        let fixture = """
+        {
+          "result": {
+            "is_healthy": { "binary": false, "probability": 0.10, "threshold": 0.5 },
+            "disease": {
+              "suggestions": [{
+                "id": "abc",
+                "name": "Botrytis",
+                "probability": 0.5356,
+                "details": {
+                  "description": "Botrytis (gray mold) is a fungal disease...",
+                  "treatment": {
+                    "chemical": ["copper soap"],
+                    "biological": ["improve airflow"],
+                    "prevention": ["water in the morning"]
+                  }
+                }
+              }]
+            }
+          }
+        }
+        """
+        let data = try #require(fixture.data(using: .utf8))
+        let response = try JSONDecoder().decode(HealthAssessmentResponse.self, from: data)
+        #expect(response.result.isHealthy?.binary == false)
+        #expect(response.result.disease?.suggestions.first?.name == "Botrytis")
+        #expect(response.result.disease?.suggestions.first?.probability == 0.5356)
+        #expect(response.result.disease?.suggestions.first?.details?.treatment?.prevention == ["water in the morning"])
+    }
+
+    @Test func healthAssessmentDecodesHealthyResponse() throws {
+        let fixture = """
+        {
+          "result": {
+            "is_healthy": { "binary": true, "probability": 0.92, "threshold": 0.5 }
+          }
+        }
+        """
+        let data = try #require(fixture.data(using: .utf8))
+        let response = try JSONDecoder().decode(HealthAssessmentResponse.self, from: data)
+        #expect(response.result.isHealthy?.binary == true)
+        #expect(response.result.disease == nil)
+    }
+
     // MARK: - AIError mapping (smoke)
 
     @Test func aiErrorLowConfidenceFormatsPercent() {

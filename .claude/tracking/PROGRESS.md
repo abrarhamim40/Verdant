@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 3 Day 20-21 — Polish on `feat/scan-polish` (Xcode registration pending)
+**Current Status:** 🟢 Week 4 Day 22-23 — PlantListView grid + disease detection bug fix on `feat/plant-list-grid` (Xcode registration pending)
 **Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 19 merged; Day 20-21 centralized `Haptics` helper, wired tactile feedback across scan flow (Identify=medium impact, photo add/remove/loaded=selection, scan success/error=notification, cancel=warning, retry=medium, heart=light), state transition animations in ScanningView (opacity+scale on success, opacity+slide-up on failure), spring animations on photo grid add/remove
-**Next task:** Build → exercise full scan flow → feel haptics + transitions → test 20+ plants manually (MASTER_PLAN says).
+**Last session:** 2026-05-17 — Day 20-21 merged → Week 3 complete; Day 22-23 PlantCard + PlantListView grid; ALSO bug-fixed disease detection — Plant.id v3 splits health into separate `/health_assessment` endpoint (not gated by `?health=` query on `/identification`). AIService now calls both endpoints in parallel via `async let`, gracefully degrades if health endpoint fails. Verified end-to-end: Dahlia → Botrytis 54% detected, full treatment plan flows through Gemini.
+**Next task:** Register 2 new files in Xcode → confirm Dahlia scan now shows disease section → Day 24-25 (PlantDetailView refinement — current detail screen is minimal Day 14 stub).
 
 ---
 
@@ -78,10 +78,10 @@ Week 3:
 
 **Deliverable:** Complete scan flow end-to-end
 
-### **WEEK 4: My Plants** ⏳ PENDING
+### **WEEK 4: My Plants** 🟡 IN PROGRESS
 
-- [ ] Day 22-23: PlantListView grid
-- [ ] Day 24-25: PlantDetailView
+- [x] Day 22-23: PlantCard (square card with photo + name + location/scientific + health dot) + PlantListView (2-col LazyVGrid, searchable, filter chips Indoor/Outdoor/Grow light, sort menu) — replaces minimal list from Day 14
+- [ ] Day 24-25: PlantDetailView refinement
 - [ ] Day 26: Scan history timeline
 - [ ] Day 27: Add/edit/delete plants
 - [ ] Day 28: CloudKit sync verification

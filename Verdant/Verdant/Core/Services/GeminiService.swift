@@ -153,7 +153,10 @@ actor GeminiService {
             Description: \(disease.details?.description ?? "")
             """
         } else {
-            prompt += "\n\nPlant appears healthy."
+            // Plant.id did not flag a confident disease. That does NOT mean the plant is definitely healthy —
+            // it might be diseased in a way the model didn't recognize, or the photo angle missed the issue.
+            // Tell Gemini to keep this in mind so the care plan doesn't overclaim.
+            prompt += "\n\nNo specific disease was flagged by Plant.id. The plant may be healthy, but it is also possible an issue exists that wasn't detected. Include warning signs the user should watch for so they can spot issues early."
         }
 
         if let climate {
