@@ -29,26 +29,13 @@ struct RootView: View {
                 .tabItem { Label("My Plants", systemImage: "leaf") }
                 .tag(RootTab.myPlants)
 
-            SettingsTabPlaceholder()
+            SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(RootTab.settings)
         }
         .tint(.forestGreen)
         .toolbarBackground(.regularMaterial, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
-    }
-}
-
-private struct SettingsTabPlaceholder: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Settings",
-                systemImage: "gearshape",
-                description: Text("Week 6+ deliverable.")
-            )
-            .navigationTitle("Settings")
-        }
     }
 }
 
