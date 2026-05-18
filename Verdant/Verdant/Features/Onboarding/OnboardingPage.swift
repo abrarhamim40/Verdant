@@ -28,6 +28,7 @@ struct OnboardingPage: View {
     }
 
     @State private var phase: AnimationPhase = .preEntry
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     enum AnimationPhase: CaseIterable {
         case preEntry, midEntry, settled
@@ -146,6 +147,14 @@ struct OnboardingPage: View {
     // MARK: - Animation driver
 
     private func runEntranceAnimation() {
+        // Reduce Motion users jump straight to the settled state — no spring
+        // chain, no offset slides, no scale overshoot. The page still reads
+        // correctly, just without the cinematic build-in.
+        if reduceMotion {
+            phase = .settled
+            return
+        }
+
         phase = .preEntry
         withAnimation(.spring(response: 0.7, dampingFraction: 0.78)) {
             phase = .midEntry
