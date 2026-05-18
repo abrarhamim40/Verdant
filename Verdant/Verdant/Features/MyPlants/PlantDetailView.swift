@@ -23,6 +23,7 @@ struct PlantDetailView: View {
     @State private var showEditSheet = false
     @State private var showAddReminderSheet = false
     @State private var showDeleteConfirm = false
+    @State private var deleteErrorMessage: String?
 
     private var sortedScans: [PlantScan] {
         (plant.scans ?? []).sorted { $0.date > $1.date }
@@ -73,6 +74,18 @@ struct PlantDetailView: View {
         } message: {
             Text("This removes the plant and all its scans. This can't be undone.")
         }
+        .alert("Couldn't delete", isPresented: deleteErrorBinding) {
+            Button("OK") { deleteErrorMessage = nil }
+        } message: {
+            Text(deleteErrorMessage ?? "")
+        }
+    }
+
+    private var deleteErrorBinding: Binding<Bool> {
+        Binding(
+            get: { deleteErrorMessage != nil },
+            set: { if !$0 { deleteErrorMessage = nil } }
+        )
     }
 
     // MARK: - Content
@@ -257,6 +270,7 @@ struct PlantDetailView: View {
         } catch {
             Logger.data.error("Delete failed: \(error.localizedDescription, privacy: .public)")
             Haptics.error()
+            deleteErrorMessage = "Couldn't delete \(name). The plant is still here — try again, or restart the app."
         }
     }
 }
