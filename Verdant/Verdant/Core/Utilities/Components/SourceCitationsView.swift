@@ -44,8 +44,7 @@ struct SourceCitationsView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.sage.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .appCard(cornerRadius: 16)
     }
 
     // MARK: - Subviews

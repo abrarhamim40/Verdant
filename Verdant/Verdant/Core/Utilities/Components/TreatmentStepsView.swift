@@ -64,7 +64,7 @@ struct TreatmentStepsView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Color.white.opacity(0.6))
+        .background(.ultraThinMaterial)
         .clipShape(Capsule())
         .accessibilityLabel("\(label) every \(days) days")
     }
