@@ -133,7 +133,6 @@ struct SavePlantSheet: View {
 
     private func savePlant() {
         isSaving = true
-        defer { isSaving = false }
 
         let plant = Plant(
             name: result.plantName,
@@ -163,19 +162,44 @@ struct SavePlantSheet: View {
         scan.diseaseProbability = result.disease?.probability
         scan.plant = plant
 
+        let reminders = Plant.defaultReminders()
+        for reminder in reminders { reminder.plant = plant }
+
         modelContext.insert(plant)
         modelContext.insert(scan)
+        reminders.forEach(modelContext.insert)
 
         do {
             try modelContext.save()
             Logger.data.info("Saved plant: \(trimmedNickname, privacy: .public)")
             Haptics.success()
+            scheduleNotifications(for: reminders, plantName: trimmedNickname)
             onSaved()
             dismiss()
         } catch {
+            isSaving = false
             Logger.data.error("Save failed: \(error.localizedDescription, privacy: .public)")
             Haptics.error()
             errorMessage = "Couldn't save right now. Try again."
+        }
+    }
+
+    /// Fire-and-forget — permission prompt + UNNotificationRequest scheduling
+    /// runs after the save returns so the user sees the success haptic and
+    /// dismiss immediately. If permission is denied the schedules are silently
+    /// skipped; the reminders still exist in SwiftData for future scheduling.
+    private func scheduleNotifications(for reminders: [CareReminder], plantName: String) {
+        Task {
+            await NotificationService.shared.requestAuthorizationIfNeeded()
+            for reminder in reminders {
+                await NotificationService.shared.schedule(
+                    reminderID: reminder.id,
+                    type: reminder.type,
+                    plantName: plantName,
+                    nextDue: reminder.nextDue,
+                    isEnabled: reminder.isEnabled
+                )
+            }
         }
     }
 

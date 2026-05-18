@@ -17,4 +17,5 @@ extension Logger {
     nonisolated static let ui = Logger(subsystem: subsystem, category: "ui")
     nonisolated static let subscription = Logger(subsystem: subsystem, category: "subscription")
     nonisolated static let auth = Logger(subsystem: subsystem, category: "auth")
+    nonisolated static let notifications = Logger(subsystem: subsystem, category: "notifications")
 }
