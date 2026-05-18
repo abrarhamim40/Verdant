@@ -47,9 +47,15 @@ struct VerdantApp: App {
 /// Gates the first-launch experience: the OnboardingView runs once, sets
 /// hasCompletedOnboarding via @AppStorage, and the user lands on the tab
 /// bar from then on. Cross-fades between the two so the transition feels
-/// designed rather than abrupt.
+/// designed rather than abrupt. Also applies the user-chosen appearance
+/// (system / light / dark) so SettingsView's picker takes effect app-wide.
 private struct ContentRoot: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("appearancePreference") private var appearanceRaw: String = AppearancePreference.system.rawValue
+
+    private var appearance: AppearancePreference {
+        AppearancePreference(rawValue: appearanceRaw) ?? .system
+    }
 
     var body: some View {
         ZStack {
@@ -62,5 +68,6 @@ private struct ContentRoot: View {
             }
         }
         .animation(.easeInOut(duration: 0.35), value: hasCompletedOnboarding)
+        .preferredColorScheme(appearance.colorScheme)
     }
 }
