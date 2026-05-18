@@ -7,8 +7,8 @@
 //  Day 14 introduced this as a minimal save-flow closer. Day 24-25 refined it:
 //  hero photo header with name overlay, care setup as a 2x2 tile grid, full
 //  TreatmentStepsView, and toolbar menu with edit/delete stubs.
-//  Day 26 adds scan history timeline (every PlantScan, not just the latest).
-//  Day 27 wires the toolbar actions.
+//  Day 26 added the scan history timeline (every PlantScan, not just latest).
+//  Day 27 wires the toolbar actions: edit sheet + delete confirmation.
 
 import SwiftUI
 import SwiftData
@@ -18,6 +18,9 @@ struct PlantDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+
+    @State private var showEditSheet = false
+    @State private var showDeleteConfirm = false
 
     private var sortedScans: [PlantScan] {
         (plant.scans ?? []).sorted { $0.date > $1.date }
@@ -41,7 +44,7 @@ struct PlantDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                heroHeader
+                PlantHeroHeader(plant: plant)
                 content
                     .padding(.top, 4)
             }
@@ -53,70 +56,20 @@ struct PlantDetailView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar { toolbarContent }
-    }
-
-    // MARK: - Hero header
-
-    @ViewBuilder
-    private var heroHeader: some View {
-        ZStack(alignment: .bottomLeading) {
-            photoOrPlaceholder
-                .frame(height: 380)
-                .frame(maxWidth: .infinity)
-                .clipped()
-
-            // Top gradient — protects the back button + ⋯ menu against bright photos
-            LinearGradient(
-                colors: [.black.opacity(0.35), .clear],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 120)
-            .frame(maxWidth: .infinity, alignment: .top)
-            .allowsHitTesting(false)
-
-            // Bottom gradient — keeps the plant name legible regardless of photo
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.65)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 180)
-            .frame(maxWidth: .infinity, alignment: .bottom)
-            .allowsHitTesting(false)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(plant.displayName)
-                    .font(.system(.largeTitle, design: .serif).weight(.bold))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
-                if let scientific = plant.scientificName, scientific != plant.displayName {
-                    Text(scientific)
-                        .font(.subheadline.italic())
-                        .foregroundStyle(.white.opacity(0.9))
-                        .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(isPresented: $showEditSheet) {
+            EditPlantSheet(plant: plant)
         }
-        .frame(height: 380)
-    }
-
-    @ViewBuilder
-    private var photoOrPlaceholder: some View {
-        if let data = plant.imageData, let image = UIImage(data: data) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-        } else {
-            ZStack {
-                Color.sage.opacity(0.35)
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 80, weight: .light))
-                    .foregroundStyle(Color.forestGreen)
+        .confirmationDialog(
+            "Delete \(plant.displayName)?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete plant", role: .destructive) {
+                deletePlant()
             }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the plant and all its scans. This can't be undone.")
         }
     }
 
@@ -258,22 +211,38 @@ struct PlantDetailView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button {
-                    // Day 27 wires edit sheet.
+                    Haptics.selection()
+                    showEditSheet = true
                 } label: {
                     Label("Edit plant", systemImage: "pencil")
                 }
-                .disabled(true)
 
                 Button(role: .destructive) {
-                    // Day 27 wires delete with confirmation.
+                    Haptics.warning()
+                    showDeleteConfirm = true
                 } label: {
                     Label("Delete plant", systemImage: "trash")
                 }
-                .disabled(true)
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
             .accessibilityLabel("More actions")
+        }
+    }
+
+    // MARK: - Delete
+
+    private func deletePlant() {
+        let name = plant.displayName
+        modelContext.delete(plant)
+        do {
+            try modelContext.save()
+            Logger.data.info("Deleted plant: \(name, privacy: .public)")
+            Haptics.success()
+            dismiss()
+        } catch {
+            Logger.data.error("Delete failed: \(error.localizedDescription, privacy: .public)")
+            Haptics.error()
         }
     }
 }

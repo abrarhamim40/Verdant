@@ -17,6 +17,7 @@ struct PlantListView: View {
     @State private var searchText = ""
     @State private var sortOption: SortOption = .dateAdded
     @State private var filterOption: FilterOption = .all
+    @State private var showAddSheet = false
 
     enum SortOption: String, CaseIterable, Identifiable {
         case dateAdded = "Recently added"
@@ -97,6 +98,9 @@ struct PlantListView: View {
             }
             .searchable(text: $searchText, prompt: "Search plants")
             .background(Color.backgroundPrimary.ignoresSafeArea())
+            .sheet(isPresented: $showAddSheet) {
+                AddPlantSheet()
+            }
         }
     }
 
@@ -112,7 +116,17 @@ struct PlantListView: View {
         ContentUnavailableView {
             Label("No plants yet", systemImage: "leaf")
         } description: {
-            Text("Scan a plant and tap the heart to save it here.")
+            Text("Scan a plant and tap the heart to save it here, or add one manually.")
+        } actions: {
+            Button {
+                Haptics.selection()
+                showAddSheet = true
+            } label: {
+                Label("Add a plant", systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.forestGreen)
         }
     }
 
@@ -143,9 +157,14 @@ struct PlantListView: View {
                                 PlantCard(plant: plant)
                             }
                             .buttonStyle(.plain)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.85).combined(with: .opacity),
+                                removal: .scale(scale: 0.9).combined(with: .opacity)
+                            ))
                         }
                     }
                     .padding(.horizontal, 16)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: visiblePlants.map(\.id))
                 }
             }
             .padding(.vertical, 12)
@@ -186,8 +205,17 @@ struct PlantListView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                Haptics.selection()
+                showAddSheet = true
+            } label: {
+                Image(systemName: "plus")
+            }
+            .accessibilityLabel("Add a plant")
+        }
         if !plants.isEmpty {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .topBarLeading) {
                 Menu {
                     Picker("Sort by", selection: $sortOption) {
                         ForEach(SortOption.allCases) { option in

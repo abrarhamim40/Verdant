@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 4 Day 26 — Scan history timeline starting on `feat/plant-detail-refine`
+**Current Status:** 🟢 Week 4 Day 26-27 — scan history timeline + add/edit/delete plants on `feat/plant-detail-refine` (Xcode registration pending for 4 new files)
 **Days until launch:** 66 days
-**Last session:** 2026-05-18 — Day 24-25 committed (PlantDetailView hero header + care tiles + full TreatmentStepsView + no-scan fallback + toolbar menu). Side commits: Vision pre-filter hotfix (threshold 0.3→0.15 + simulator skip), placeholder 1024 app icon.
-**Next task:** Day 26 — render all PlantScan records as timeline section in PlantDetailView (currently shows only latestScan via `.first`).
+**Last session:** 2026-05-18 — Committed Day 24-25 + Vision hotfix + app icon + Day 26 (ScanHistoryTimeline). Then refactor: extracted LatestScanSection + PlantHeroHeader so PlantDetailView fits under 300. Day 27: EditPlantSheet, AddPlantSheet, wired toolbar Edit/Delete in PlantDetailView (confirmation dialog), wired "+" toolbar in PlantListView, spring transitions on grid add/remove.
+**Next task:** Register 4 new files in Xcode → smoke test (add manual plant → edit → delete with confirmation → grid animates) → Day 28 (CloudKit sync verification — test iPhone simulator ↔ iPad simulator).
 
 ---
 
@@ -72,8 +72,8 @@ Week 3:
 
 - [x] Day 22-23: PlantCard (square card with photo + name + location/scientific + health dot) + PlantListView (2-col LazyVGrid, searchable, filter chips Indoor/Outdoor/Grow light, sort menu) — replaces minimal list from Day 14. ALSO bug-fix: Plant.id v3 health detection moved to separate /health_assessment endpoint with parallel async let calls + graceful degradation.
 - [x] Day 24-25: PlantDetailView refinement — hero photo with overlaid serif title + scientific name, 2x2 care setup tile grid, full TreatmentStepsView, inline disease description, no-scan fallback, toolbar ellipsis menu (Edit + Delete stubs for Day 27). Also: Vision pre-filter hotfix (threshold 0.3→0.15 + simulator skip — was rejecting valid scans in dev) and placeholder 1024 app icon to silence Xcode warning.
-- [ ] Day 26: Scan history timeline 🟡 IN PROGRESS
-- [ ] Day 27: Add/edit/delete plants
+- [x] Day 26: ScanHistoryTimeline — vertical timeline of every previous PlantScan with health-colored dots, photo journal style. Latest scan stays as hero card above. Hidden when only one scan exists.
+- [x] Day 27: EditPlantSheet (mutates nickname/location/sunlight/indoor/outdoor/growLight), AddPlantSheet (manual entry — no scan needed), toolbar Edit + Delete wired in PlantDetailView with confirmationDialog, "+" toolbar button in PlantListView, spring scale+opacity transition on grid add/remove. Refactor: split PlantDetailView into PlantHeroHeader + LatestScanSection so each file fits the 300-line guideline.
 - [ ] Day 28: CloudKit sync verification
 
 **Deliverable:** Plant management across devices
