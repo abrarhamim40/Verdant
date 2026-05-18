@@ -50,12 +50,9 @@ struct PlantDetailView: View {
                     .padding(.top, 4)
             }
         }
-        .ignoresSafeArea(edges: .top)
         .background(Color.backgroundPrimary.ignoresSafeArea())
-        .navigationTitle("")
+        .navigationTitle(plant.displayName)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar { toolbarContent }
         .sheet(isPresented: $showEditSheet) {
             EditPlantSheet(plant: plant)
