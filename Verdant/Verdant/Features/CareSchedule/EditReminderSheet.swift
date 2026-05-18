@@ -321,18 +321,29 @@ struct EditReminderSheet: View {
             }
         }
 
-        // Shift the existing nextDue's time-of-day to the new preferredTime
-        // so the user immediately sees the change land on the reminder card
-        // (and so the scheduled notification fires at the right hour:minute,
-        // not at the original creation time-of-day).
+        // Re-anchor nextDue to the new preferredTime. If today's preferred
+        // time is still ahead of now, fire today — so editing to "1 minute
+        // from now" works for testing AND for "I want it earlier today" intent.
+        // Otherwise keep the existing nextDue date but with the new time-of-day
+        // so future fires still honor the chosen hour.
         if preferredTimeChanged {
             let calendar = Calendar.current
+            let now = Date()
             let time = calendar.dateComponents([.hour, .minute], from: preferredTime)
-            var dateParts = calendar.dateComponents([.year, .month, .day], from: reminder.nextDue)
-            dateParts.hour = time.hour
-            dateParts.minute = time.minute
-            if let updated = calendar.date(from: dateParts) {
-                reminder.nextDue = updated
+
+            var todayParts = calendar.dateComponents([.year, .month, .day], from: now)
+            todayParts.hour = time.hour
+            todayParts.minute = time.minute
+
+            if let todayAtTime = calendar.date(from: todayParts), todayAtTime > now {
+                reminder.nextDue = todayAtTime
+            } else {
+                var dateParts = calendar.dateComponents([.year, .month, .day], from: reminder.nextDue)
+                dateParts.hour = time.hour
+                dateParts.minute = time.minute
+                if let updated = calendar.date(from: dateParts) {
+                    reminder.nextDue = updated
+                }
             }
         }
 

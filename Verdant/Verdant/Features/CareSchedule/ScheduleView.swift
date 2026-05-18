@@ -56,30 +56,34 @@ struct ScheduleView: View {
 
     // MARK: - Active / completed split
 
-    /// Reminders that still need action today or later.
-    /// A sub-day reminder completed earlier today but already due again
-    /// (e.g. every 12 hours, completed at 9 AM, now 9:30 PM) goes back into
-    /// active so the user can mark it done a second time.
+    /// "Completed today" means done for today, nothing more to do until
+    /// tomorrow or later. A reminder rescheduled to fire again today (sub-day
+    /// cadence, or user edited preferredTime to a later time today) belongs
+    /// in active — there's still action coming up before midnight.
     private var activeReminders: [CareReminder] {
-        let now = Date()
+        let endOfToday = endOfToday()
         return reminders.filter { reminder in
             guard let last = reminder.lastCompleted else { return true }
-            if calendar.isDateInToday(last) && reminder.nextDue > now {
-                return false // visible in completedTodayReminders instead
+            // Completed today AND next fire is tomorrow+ → not active.
+            if calendar.isDateInToday(last) && reminder.nextDue >= endOfToday {
+                return false
             }
             return true
         }
     }
 
-    /// Reminders the user already finished today — and that aren't due
-    /// again yet. Surfaces the satisfaction of "I just tapped ✓".
     private var completedTodayReminders: [CareReminder] {
-        let now = Date()
+        let endOfToday = endOfToday()
         return reminders.filter { reminder in
             guard let last = reminder.lastCompleted else { return false }
-            return calendar.isDateInToday(last) && reminder.nextDue > now
+            return calendar.isDateInToday(last) && reminder.nextDue >= endOfToday
         }
         .sorted { ($0.lastCompleted ?? .distantPast) > ($1.lastCompleted ?? .distantPast) }
+    }
+
+    private func endOfToday() -> Date {
+        let startOfToday = calendar.startOfDay(for: Date())
+        return calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? startOfToday
     }
 
     private var dueTodayCount: Int {
