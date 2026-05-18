@@ -19,7 +19,8 @@ struct EditReminderSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @State private var frequencyDays: Int
+    @State private var unit: FrequencyUnit
+    @State private var frequencyValue: Int
     @State private var notes: String
     @State private var amount: String
     @State private var preferredTime: Date
@@ -36,9 +37,31 @@ struct EditReminderSheet: View {
     /// notifications still won't fire. We show a footer hint in that case.
     @State private var systemAuthState: NotificationService.AuthorizationState = .notDetermined
 
+    /// Days vs hours selector. Mirrors AddReminderSheet so the same picker is
+    /// available when retroactively switching a daily reminder to hourly.
+    enum FrequencyUnit: String, CaseIterable, Identifiable {
+        case days, hours
+        var id: Self { self }
+        var label: String { self == .days ? "Days" : "Hours" }
+        var range: ClosedRange<Int> { self == .days ? 1...365 : 1...23 }
+        func valueLabel(_ value: Int) -> String {
+            switch self {
+            case .days:  return "\(value) \(value == 1 ? "day" : "days")"
+            case .hours: return "\(value) \(value == 1 ? "hour" : "hours")"
+            }
+        }
+    }
+
     init(reminder: CareReminder) {
         self.reminder = reminder
-        _frequencyDays = State(initialValue: reminder.frequencyDays)
+        // Reflect the current state: if frequencyHours is set, start in Hours mode.
+        if let hours = reminder.frequencyHours, hours > 0 {
+            _unit = State(initialValue: .hours)
+            _frequencyValue = State(initialValue: hours)
+        } else {
+            _unit = State(initialValue: .days)
+            _frequencyValue = State(initialValue: reminder.frequencyDays)
+        }
         _notes = State(initialValue: reminder.notes ?? "")
         _amount = State(initialValue: reminder.amount ?? "")
         _preferredTime = State(initialValue: reminder.preferredTime ?? Self.defaultMorning())
@@ -109,10 +132,21 @@ struct EditReminderSheet: View {
 
     private var frequencySection: some View {
         Section {
-            Stepper(value: $frequencyDays, in: 1...365) {
+            Picker("Unit", selection: $unit) {
+                ForEach(FrequencyUnit.allCases) { u in
+                    Text(u.label).tag(u)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: unit) { _, newUnit in
+                // Clamp the stepper into the new unit's range when switching.
+                frequencyValue = min(max(frequencyValue, newUnit.range.lowerBound), newUnit.range.upperBound)
+            }
+
+            Stepper(value: $frequencyValue, in: unit.range) {
                 HStack {
                     Text("Every")
-                    Text("\(frequencyDays) \(frequencyDays == 1 ? "day" : "days")")
+                    Text(unit.valueLabel(frequencyValue))
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.forestGreen)
                 }
@@ -120,7 +154,7 @@ struct EditReminderSheet: View {
         } header: {
             Text("How often")
         } footer: {
-            Text("Your climate beats any default. Bump the interval up in dry season, down when growth slows.")
+            Text("Hours = sub-day cadence (every 12 hours). Days = once-a-day or longer.")
         }
     }
 
@@ -256,7 +290,19 @@ struct EditReminderSheet: View {
     // MARK: - Save
 
     private func save() {
-        let frequencyChanged = frequencyDays != reminder.frequencyDays
+        // Compare against the reminder's current effective unit so we only
+        // reschedule when the user actually changed the cadence.
+        let currentlyHours = (reminder.frequencyHours ?? 0) > 0
+        let willBeHours = unit == .hours
+        let unitChanged = currentlyHours != willBeHours
+        let valueChanged: Bool = {
+            if willBeHours {
+                return frequencyValue != (reminder.frequencyHours ?? 0)
+            } else {
+                return frequencyValue != reminder.frequencyDays
+            }
+        }()
+        let frequencyChanged = unitChanged || valueChanged
         let enabledChanged = isEnabled != reminder.isEnabled
         let preferredTimeChanged = !Self.sameMinute(reminder.preferredTime, preferredTime)
 
@@ -267,7 +313,12 @@ struct EditReminderSheet: View {
 
         if frequencyChanged {
             // Re-anchors nextDue inside the model + flips customFrequency on.
-            reminder.setCustomFrequency(frequencyDays)
+            switch unit {
+            case .days:
+                reminder.setCustomFrequency(frequencyValue)
+            case .hours:
+                reminder.setCustomFrequencyHours(frequencyValue)
+            }
         }
 
         // Snapshot for the Task — reminder access has to stay on the main actor.

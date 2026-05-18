@@ -191,11 +191,32 @@ struct ReminderCard: View {
         }
     }
 
+    /// Switches into hour resolution for sub-day reminders so "every 12 hours"
+    /// reads as "Due in 4h" instead of rounding to 0d.
     private var dueLabel: String {
-        if reminder.isOverdue {
-            let days = abs(reminder.daysUntilDue)
-            return days == 0 ? "Due today" : "\(days)d overdue"
+        let secondsUntil = reminder.nextDue.timeIntervalSinceNow
+        let isSubDay = reminder.frequencyHours != nil
+
+        if secondsUntil < 0 {
+            // Overdue
+            let absSeconds = -secondsUntil
+            if isSubDay || absSeconds < 24 * 3600 {
+                let hours = max(1, Int(absSeconds / 3600))
+                return "\(hours)h overdue"
+            }
+            let days = Int(absSeconds / (24 * 3600))
+            return "\(days)d overdue"
         }
+
+        if isSubDay {
+            let hours = Int(secondsUntil / 3600)
+            if hours < 1 {
+                let minutes = max(1, Int(secondsUntil / 60))
+                return "Due in \(minutes)m"
+            }
+            return "Due in \(hours)h"
+        }
+
         let days = reminder.daysUntilDue
         if days == 0 { return "Due today" }
         if days == 1 { return "Due tomorrow" }

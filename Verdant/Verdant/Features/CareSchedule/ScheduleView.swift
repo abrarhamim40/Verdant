@@ -57,19 +57,27 @@ struct ScheduleView: View {
     // MARK: - Active / completed split
 
     /// Reminders that still need action today or later.
+    /// A sub-day reminder completed earlier today but already due again
+    /// (e.g. every 12 hours, completed at 9 AM, now 9:30 PM) goes back into
+    /// active so the user can mark it done a second time.
     private var activeReminders: [CareReminder] {
-        reminders.filter { reminder in
+        let now = Date()
+        return reminders.filter { reminder in
             guard let last = reminder.lastCompleted else { return true }
-            return !calendar.isDateInToday(last)
+            if calendar.isDateInToday(last) && reminder.nextDue > now {
+                return false // visible in completedTodayReminders instead
+            }
+            return true
         }
     }
 
-    /// Reminders the user already finished today — surface them so the
-    /// "I just tapped ✓ and the card vanished" feeling goes away.
+    /// Reminders the user already finished today — and that aren't due
+    /// again yet. Surfaces the satisfaction of "I just tapped ✓".
     private var completedTodayReminders: [CareReminder] {
-        reminders.filter { reminder in
+        let now = Date()
+        return reminders.filter { reminder in
             guard let last = reminder.lastCompleted else { return false }
-            return calendar.isDateInToday(last)
+            return calendar.isDateInToday(last) && reminder.nextDue > now
         }
         .sorted { ($0.lastCompleted ?? .distantPast) > ($1.lastCompleted ?? .distantPast) }
     }
@@ -366,42 +374,53 @@ struct ScheduleView: View {
 private struct CompletedReminderRow: View {
     let reminder: CareReminder
 
+    @State private var showEditSheet = false
+
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color.forestGreen)
-                    .frame(width: 36, height: 36)
-                Image(systemName: "checkmark")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.white)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Text(reminder.plant?.displayName ?? "Unknown plant")
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                    Text("·")
-                        .foregroundStyle(.tertiary)
-                    Text(typeLabel)
-                        .font(.subheadline)
+        Button {
+            Haptics.selection()
+            showEditSheet = true
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.forestGreen)
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "checkmark")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(reminder.plant?.displayName ?? "Unknown plant")
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(1)
+                        Text("·")
+                            .foregroundStyle(.tertiary)
+                        Text(typeLabel)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("Next \(reminder.frequencyDescription)")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Text("Next in \(reminder.frequencyDays) \(reminder.frequencyDays == 1 ? "day" : "days")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                if let lastCompleted = reminder.lastCompleted {
+                    Text(lastCompleted, format: .dateTime.hour().minute())
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
-            Spacer(minLength: 0)
-            if let lastCompleted = reminder.lastCompleted {
-                Text(lastCompleted, format: .dateTime.hour().minute())
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.forestGreen.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.forestGreen.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showEditSheet) {
+            EditReminderSheet(reminder: reminder)
+        }
     }
 
     private var typeLabel: String {
