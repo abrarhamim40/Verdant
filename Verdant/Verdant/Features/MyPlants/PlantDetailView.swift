@@ -12,6 +12,7 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 struct PlantDetailView: View {
     let plant: Plant

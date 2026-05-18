@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 4 Day 26-27 — scan history timeline + add/edit/delete plants on `feat/plant-detail-refine` (Xcode registration pending for 4 new files)
+**Current Status:** 🟢 Week 4 Day 26-27 complete on `feat/plant-detail-refine` — build green, all 27 tests pass
 **Days until launch:** 66 days
-**Last session:** 2026-05-18 — Committed Day 24-25 + Vision hotfix + app icon + Day 26 (ScanHistoryTimeline). Then refactor: extracted LatestScanSection + PlantHeroHeader so PlantDetailView fits under 300. Day 27: EditPlantSheet, AddPlantSheet, wired toolbar Edit/Delete in PlantDetailView (confirmation dialog), wired "+" toolbar in PlantListView, spring transitions on grid add/remove.
-**Next task:** Register 4 new files in Xcode → smoke test (add manual plant → edit → delete with confirmation → grid animates) → Day 28 (CloudKit sync verification — test iPhone simulator ↔ iPad simulator).
+**Last session:** 2026-05-18 — Committed Day 24-25 + Vision hotfix + app icon + Day 26 (ScanHistoryTimeline). Then refactor: extracted LatestScanSection + PlantHeroHeader so PlantDetailView fits under 300. Day 27: EditPlantSheet, AddPlantSheet, wired toolbar Edit/Delete in PlantDetailView (confirmation dialog), wired "+" toolbar in PlantListView, spring transitions on grid add/remove. Build fix: added `import os` to PlantDetailView (delete logic uses Logger). New files auto-registered — Xcode 16 file-system-synchronized groups, no manual target add needed.
+**Next task:** Day 28 — CloudKit sync verification (iPhone simulator ↔ iPad simulator), then Week 4 ready to merge.
 
 ---
 
