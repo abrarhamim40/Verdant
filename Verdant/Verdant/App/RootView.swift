@@ -17,8 +17,8 @@ struct RootView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeTabPlaceholder()
-                .tabItem { Label("Home", systemImage: "house") }
+            ScheduleView()
+                .tabItem { Label("Today", systemImage: "sun.max") }
                 .tag(RootTab.home)
 
             ScanView()
@@ -34,19 +34,6 @@ struct RootView: View {
                 .tag(RootTab.settings)
         }
         .tint(.forestGreen)
-    }
-}
-
-private struct HomeTabPlaceholder: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Home",
-                systemImage: "house",
-                description: Text("Week 4 deliverable.")
-            )
-            .navigationTitle("Verdant")
-        }
     }
 }
 
