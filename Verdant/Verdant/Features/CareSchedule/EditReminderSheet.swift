@@ -258,6 +258,7 @@ struct EditReminderSheet: View {
     private func save() {
         let frequencyChanged = frequencyDays != reminder.frequencyDays
         let enabledChanged = isEnabled != reminder.isEnabled
+        let preferredTimeChanged = !Self.sameMinute(reminder.preferredTime, preferredTime)
 
         reminder.notes = notes.trimmingCharacters(in: .whitespaces).isEmpty ? nil : notes
         reminder.amount = amount.trimmingCharacters(in: .whitespaces).isEmpty ? nil : amount
@@ -274,6 +275,7 @@ struct EditReminderSheet: View {
         let type = reminder.type
         let plantName = reminder.plant?.displayName ?? "Plant"
         let nextDue = reminder.nextDue
+        let chosenTime = reminder.preferredTime
         let enabled = reminder.isEnabled
 
         do {
@@ -287,20 +289,31 @@ struct EditReminderSheet: View {
             return
         }
 
-        // Reschedule whenever the frequency moved OR the enabled toggle changed.
-        if frequencyChanged || enabledChanged {
+        // Reschedule whenever frequency, enabled, or preferred time changed.
+        if frequencyChanged || enabledChanged || preferredTimeChanged {
             Task {
                 await NotificationService.shared.schedule(
                     reminderID: reminderID,
                     type: type,
                     plantName: plantName,
                     nextDue: nextDue,
+                    preferredTime: chosenTime,
                     isEnabled: enabled
                 )
             }
         }
 
         dismiss()
+    }
+
+    /// Compare two Date? values down to hour:minute resolution so we don't
+    /// reschedule on imperceptible DatePicker drift.
+    private static func sameMinute(_ a: Date?, _ b: Date?) -> Bool {
+        guard let a, let b else { return a == nil && b == nil }
+        let calendar = Calendar.current
+        let ca = calendar.dateComponents([.hour, .minute], from: a)
+        let cb = calendar.dateComponents([.hour, .minute], from: b)
+        return ca.hour == cb.hour && ca.minute == cb.minute
     }
 
     // MARK: - Undo + backdate (Day 34)
@@ -329,6 +342,7 @@ struct EditReminderSheet: View {
         let type = reminder.type
         let plantName = reminder.plant?.displayName ?? "Plant"
         let nextDue = reminder.nextDue
+        let chosenTime = reminder.preferredTime
         let isEnabled = reminder.isEnabled
 
         do {
@@ -347,6 +361,7 @@ struct EditReminderSheet: View {
                 type: type,
                 plantName: plantName,
                 nextDue: nextDue,
+                preferredTime: chosenTime,
                 isEnabled: isEnabled
             )
         }

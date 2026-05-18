@@ -157,15 +157,19 @@ struct AddPlantSheet: View {
     /// Fire-and-forget — permission prompt fires on first save, subsequent
     /// saves just schedule. Silently skipped if user denies permission.
     private func scheduleNotifications(for reminders: [CareReminder], plantName: String) {
+        let payloads = reminders.map {
+            (id: $0.id, type: $0.type, nextDue: $0.nextDue, preferredTime: $0.preferredTime, isEnabled: $0.isEnabled)
+        }
         Task {
             await NotificationService.shared.requestAuthorizationIfNeeded()
-            for reminder in reminders {
+            for payload in payloads {
                 await NotificationService.shared.schedule(
-                    reminderID: reminder.id,
-                    type: reminder.type,
+                    reminderID: payload.id,
+                    type: payload.type,
                     plantName: plantName,
-                    nextDue: reminder.nextDue,
-                    isEnabled: reminder.isEnabled
+                    nextDue: payload.nextDue,
+                    preferredTime: payload.preferredTime,
+                    isEnabled: payload.isEnabled
                 )
             }
         }
