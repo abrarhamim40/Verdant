@@ -86,13 +86,16 @@ final class CareReminder {
         ) ?? Date()
     }
 
+    /// User-driven frequency change. Re-anchors nextDue so the new interval starts
+    /// from the most recent completion if there is one, or from now if the plant has
+    /// never been cared for yet — without this branch a frequency change before any
+    /// completion would leave nextDue at the original creation-time value.
     func setCustomFrequency(_ days: Int) {
         customFrequency = true
         frequencyDays = days
 
-        if let last = lastCompleted {
-            nextDue = Calendar.current.date(byAdding: .day, value: days, to: last) ?? Date()
-        }
+        let anchor = lastCompleted ?? Date()
+        nextDue = Calendar.current.date(byAdding: .day, value: days, to: anchor) ?? Date()
     }
 
     var isOverdue: Bool {

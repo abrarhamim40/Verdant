@@ -19,17 +19,27 @@ struct ReminderCard: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var isCompleting = false
+    @State private var showEditSheet = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            plantThumbnail
-            details
-            Spacer(minLength: 0)
-            doneButton
+        Button {
+            Haptics.selection()
+            showEditSheet = true
+        } label: {
+            HStack(spacing: 12) {
+                plantThumbnail
+                details
+                Spacer(minLength: 0)
+                doneButton
+            }
+            .padding(12)
+            .background(cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
-        .padding(12)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showEditSheet) {
+            EditReminderSheet(reminder: reminder)
+        }
     }
 
     // MARK: - Thumbnail
@@ -78,9 +88,23 @@ struct ReminderCard: View {
                 .foregroundStyle(.primary)
                 .lineLimit(1)
 
-            Text(typeLabel)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(typeTint)
+            HStack(spacing: 4) {
+                Text(typeLabel)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(typeTint)
+                if reminder.customFrequency {
+                    Text("·")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 2) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.caption2.weight(.semibold))
+                        Text("Custom")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .foregroundStyle(Color.terracotta)
+                }
+            }
 
             HStack(spacing: 6) {
                 Text(dueLabel)
