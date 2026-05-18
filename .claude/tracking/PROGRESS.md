@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 4 Day 26-27 complete on `feat/plant-detail-refine` — build green, all 27 tests pass
+**Current Status:** 🟢 Week 4 Day 26-27 complete on `feat/plant-detail-refine` — build green, all 27 tests pass. Day 28 deferred (no paid Apple Developer account yet).
 **Days until launch:** 66 days
-**Last session:** 2026-05-18 — Committed Day 24-25 + Vision hotfix + app icon + Day 26 (ScanHistoryTimeline). Then refactor: extracted LatestScanSection + PlantHeroHeader so PlantDetailView fits under 300. Day 27: EditPlantSheet, AddPlantSheet, wired toolbar Edit/Delete in PlantDetailView (confirmation dialog), wired "+" toolbar in PlantListView, spring transitions on grid add/remove. Build fix: added `import os` to PlantDetailView (delete logic uses Logger). New files auto-registered — Xcode 16 file-system-synchronized groups, no manual target add needed.
-**Next task:** Day 28 — CloudKit sync verification (iPhone simulator ↔ iPad simulator), then Week 4 ready to merge.
+**Last session:** 2026-05-18 — Committed Day 24-25 + Vision hotfix + app icon + Day 26 (ScanHistoryTimeline). Refactor: extracted LatestScanSection + PlantHeroHeader so PlantDetailView fits under 300. Day 27: EditPlantSheet, AddPlantSheet, wired toolbar Edit/Delete (confirmation dialog), "+" toolbar in PlantListView, spring transitions on grid add/remove. Build fix: added `import os` to PlantDetailView. Smoke test passed on iPhone 17 sim. Day 28 (CloudKit sync) needs paid Apple Developer account ($99/yr) for the iCloud capability — code is already `.automatic`, sync will start working as soon as the entitlement is added; no code refactor needed at that point.
+**Next task:** Merge `feat/plant-detail-refine` → main → start Day 29-30 on `feat/care-reminders` branch (CareReminder logic + local notifications + permission flow).
 
 ---
 
@@ -74,19 +74,19 @@ Week 3:
 - [x] Day 24-25: PlantDetailView refinement — hero photo with overlaid serif title + scientific name, 2x2 care setup tile grid, full TreatmentStepsView, inline disease description, no-scan fallback, toolbar ellipsis menu (Edit + Delete stubs for Day 27). Also: Vision pre-filter hotfix (threshold 0.3→0.15 + simulator skip — was rejecting valid scans in dev) and placeholder 1024 app icon to silence Xcode warning.
 - [x] Day 26: ScanHistoryTimeline — vertical timeline of every previous PlantScan with health-colored dots, photo journal style. Latest scan stays as hero card above. Hidden when only one scan exists.
 - [x] Day 27: EditPlantSheet (mutates nickname/location/sunlight/indoor/outdoor/growLight), AddPlantSheet (manual entry — no scan needed), toolbar Edit + Delete wired in PlantDetailView with confirmationDialog, "+" toolbar button in PlantListView, spring scale+opacity transition on grid add/remove. Refactor: split PlantDetailView into PlantHeroHeader + LatestScanSection so each file fits the 300-line guideline.
-- [ ] Day 28: CloudKit sync verification
+- [⏸️] Day 28: CloudKit sync verification — DEFERRED, needs paid Apple Developer account. Models verified CloudKit-compatible (all properties default/optional, to-many relationships optional, inverses set, no .unique). ModelContainer already `.automatic`, so adding the entitlement later = zero code change. Bundle with Day 35 + Week 6 monetization when account is purchased.
 
 **Deliverable:** Plant management across devices
 
-### **WEEK 5: Care Schedule** ⏳ PENDING
+### **WEEK 5: Care Schedule** 🟡 STARTING NEXT
 
-- [ ] Day 29-30: Reminder system + notifications
-- [ ] Day 31-32: ScheduleView + ReminderCard
-- [ ] Day 33: Manual care override ⭐
-- [ ] Day 34: Task undo + history ⭐
-- [ ] Day 35: Climate awareness
+- [ ] Day 29-30: Reminder system + local notifications (permission flow, UNUserNotificationCenter)
+- [ ] Day 31-32: ScheduleView + ReminderCard (today's tasks, complete/snooze/skip)
+- [ ] Day 33: Manual care override ⭐ (KEY DIFFERENTIATOR — sliders, custom intervals)
+- [ ] Day 34: Task undo + history ⭐ (KEY DIFFERENTIATOR — long-press undo, backdate)
+- [⏸️] Day 35: Climate awareness — DEFERRED, WeatherKit needs paid Apple Developer account. Bundle with Day 28.
 
-**Deliverable:** Smart care with customization
+**Deliverable:** Smart care with customization (climate layer added later)
 
 ### **WEEK 6: Monetization** ⏳ PENDING
 
