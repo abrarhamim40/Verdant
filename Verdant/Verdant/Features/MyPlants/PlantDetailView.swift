@@ -21,6 +21,7 @@ struct PlantDetailView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var showEditSheet = false
+    @State private var showAddReminderSheet = false
     @State private var showDeleteConfirm = false
 
     private var sortedScans: [PlantScan] {
@@ -56,6 +57,9 @@ struct PlantDetailView: View {
         .toolbar { toolbarContent }
         .sheet(isPresented: $showEditSheet) {
             EditPlantSheet(plant: plant)
+        }
+        .sheet(isPresented: $showAddReminderSheet) {
+            AddReminderSheet(plant: plant)
         }
         .confirmationDialog(
             "Delete \(plant.displayName)?",
@@ -208,6 +212,13 @@ struct PlantDetailView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                Button {
+                    Haptics.selection()
+                    showAddReminderSheet = true
+                } label: {
+                    Label("Add reminder", systemImage: "bell.badge.fill")
+                }
+
                 Button {
                     Haptics.selection()
                     showEditSheet = true
