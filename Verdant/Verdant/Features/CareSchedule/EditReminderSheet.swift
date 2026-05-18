@@ -32,6 +32,10 @@ struct EditReminderSheet: View {
     // one tap away.
     @State private var backdateDate: Date = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
 
+    /// iOS denial — if the user toggles "Enabled" on but system permission is off,
+    /// notifications still won't fire. We show a footer hint in that case.
+    @State private var systemAuthState: NotificationService.AuthorizationState = .notDetermined
+
     init(reminder: CareReminder) {
         self.reminder = reminder
         _frequencyDays = State(initialValue: reminder.frequencyDays)
@@ -62,6 +66,9 @@ struct EditReminderSheet: View {
                         .bold()
                         .disabled(frequencyDays < 1)
                 }
+            }
+            .task {
+                systemAuthState = await NotificationService.shared.authorizationState()
             }
             .alert("Couldn't save", isPresented: errorBinding) {
                 Button("OK") { errorMessage = nil }
@@ -147,6 +154,11 @@ struct EditReminderSheet: View {
                     Label("\(reminder.streak)", systemImage: "flame.fill")
                         .foregroundStyle(Color.terracotta)
                 }
+            }
+        } footer: {
+            if isEnabled && systemAuthState == .denied {
+                Text("Notifications are disabled for Verdant in iOS Settings. Enable them there to actually receive these alerts.")
+                    .foregroundStyle(Color.terracotta)
             }
         }
     }
