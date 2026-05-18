@@ -195,18 +195,13 @@ Temporary Items
 
 
 # =====================================================
-# 🤖 Claude Code & AI Tools
+# 🤖 Claude Code & AI Tools (private — never push)
 # =====================================================
 
-# Claude Code internal cache
-.claude/cache/
-.claude/logs/
-.claude/.tmp/
-
-# But KEEP these (your workflow files):
-# !.claude/PROMPTS.md
-# !.claude/tracking/PROGRESS.md
-# !.claude/skills/
+# Entire Claude workspace stays local — chat history, progress
+# tracking, skills, prompts are personal/internal artifacts that
+# don't belong in the public GitHub repo.
+.claude/
 
 # AI tool caches
 .cursor/
@@ -269,13 +264,14 @@ TODO-personal.md
 SCRATCH.md
 draft-*.md
 
-# But keep important docs
-!README.md
-!MASTER_PLAN.md
-!CLAUDE.md
-!SETUP_CHECKLIST.md
-!.claude/PROMPTS.md
-!.claude/tracking/PROGRESS.md
+# Planning + onboarding docs stay local. Only project code
+# (the Verdant/ directory) belongs in the public GitHub mirror.
+MASTER_PLAN.md
+CLAUDE.md
+SETUP_CHECKLIST.md
+README.md
+docs/
+Config.example.plist
 
 
 # =====================================================
