@@ -11,6 +11,8 @@ import os
 
 @main
 struct VerdantApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     let sharedModelContainer: ModelContainer = {
         let schema = Schema([
             AppUser.self,
