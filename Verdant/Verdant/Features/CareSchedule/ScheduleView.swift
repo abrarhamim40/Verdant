@@ -11,6 +11,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ScheduleView: View {
     @Query(
@@ -19,6 +20,12 @@ struct ScheduleView: View {
     ) private var reminders: [CareReminder]
 
     @Query private var plants: [Plant]
+
+    /// iOS denial state — banner appears in the header until the user opens Settings
+    /// and toggles notifications back on. Re-checked when the app returns to the
+    /// foreground so the banner disappears automatically once they fix it.
+    @State private var authState: NotificationService.AuthorizationState = .notDetermined
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -34,7 +41,17 @@ struct ScheduleView: View {
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.large)
             .background(Color.backgroundPrimary.ignoresSafeArea())
+            .task { await refreshAuthState() }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    Task { await refreshAuthState() }
+                }
+            }
         }
+    }
+
+    private func refreshAuthState() async {
+        authState = await NotificationService.shared.authorizationState()
     }
 
     // MARK: - Sections
@@ -76,6 +93,9 @@ struct ScheduleView: View {
     private var schedule: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                if authState == .denied {
+                    notificationsDeniedBanner
+                }
                 summaryHeader
                 ForEach(groupedReminders) { section in
                     sectionView(section)
@@ -83,6 +103,45 @@ struct ScheduleView: View {
             }
             .padding(20)
         }
+    }
+
+    /// iOS only allows the permission prompt once. After denial the app cannot
+    /// re-ask — the user has to flip it on themselves in Settings. This banner
+    /// makes the dead-end visible and deep-links them straight there.
+    private var notificationsDeniedBanner: some View {
+        Button {
+            Haptics.selection()
+            openAppSettings()
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "bell.slash.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color.terracotta)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Notifications are off")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("Reminders won't alert you. Tap to enable in Settings.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.terracotta.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func openAppSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     private var summaryHeader: some View {
