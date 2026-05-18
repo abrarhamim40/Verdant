@@ -321,6 +321,21 @@ struct EditReminderSheet: View {
             }
         }
 
+        // Shift the existing nextDue's time-of-day to the new preferredTime
+        // so the user immediately sees the change land on the reminder card
+        // (and so the scheduled notification fires at the right hour:minute,
+        // not at the original creation time-of-day).
+        if preferredTimeChanged {
+            let calendar = Calendar.current
+            let time = calendar.dateComponents([.hour, .minute], from: preferredTime)
+            var dateParts = calendar.dateComponents([.year, .month, .day], from: reminder.nextDue)
+            dateParts.hour = time.hour
+            dateParts.minute = time.minute
+            if let updated = calendar.date(from: dateParts) {
+                reminder.nextDue = updated
+            }
+        }
+
         // Snapshot for the Task — reminder access has to stay on the main actor.
         let reminderID = reminder.id
         let type = reminder.type

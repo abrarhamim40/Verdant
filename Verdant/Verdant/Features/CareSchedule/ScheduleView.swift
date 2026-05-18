@@ -401,7 +401,7 @@ private struct CompletedReminderRow: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    Text("Next \(reminder.frequencyDescription)")
+                    Text("Next: \(nextDueDescription)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -431,6 +431,27 @@ private struct CompletedReminderRow: View {
         case "misting":     return "Misted"
         default:            return reminder.type.capitalized
         }
+    }
+
+    /// Honest "Next" copy so the user can see exactly when the next fire is
+    /// after editing preferredTime. Reads "tomorrow 9:00 AM" or "today 11:33
+    /// PM" for near-term, "Mon May 25, 9:00 AM" for further out.
+    private var nextDueDescription: String {
+        let calendar = Calendar.current
+        let nextDue = reminder.nextDue
+        let timeString = nextDue.formatted(.dateTime.hour().minute())
+
+        if calendar.isDateInToday(nextDue) {
+            return "today \(timeString)"
+        }
+        if calendar.isDateInTomorrow(nextDue) {
+            return "tomorrow \(timeString)"
+        }
+        let daysAway = calendar.dateComponents([.day], from: calendar.startOfDay(for: Date()), to: calendar.startOfDay(for: nextDue)).day ?? 0
+        if daysAway < 7 {
+            return "\(nextDue.formatted(.dateTime.weekday(.wide))) \(timeString)"
+        }
+        return "\(nextDue.formatted(.dateTime.day().month(.abbreviated))) \(timeString)"
     }
 }
 
