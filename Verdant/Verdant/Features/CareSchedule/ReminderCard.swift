@@ -20,6 +20,7 @@ struct ReminderCard: View {
 
     @State private var isCompleting = false
     @State private var showEditSheet = false
+    @State private var completionErrorMessage: String?
 
     var body: some View {
         Button {
@@ -40,6 +41,18 @@ struct ReminderCard: View {
         .sheet(isPresented: $showEditSheet) {
             EditReminderSheet(reminder: reminder)
         }
+        .alert("Couldn't mark done", isPresented: completionErrorBinding) {
+            Button("OK") { completionErrorMessage = nil }
+        } message: {
+            Text(completionErrorMessage ?? "")
+        }
+    }
+
+    private var completionErrorBinding: Binding<Bool> {
+        Binding(
+            get: { completionErrorMessage != nil },
+            set: { if !$0 { completionErrorMessage = nil } }
+        )
     }
 
     // MARK: - Thumbnail
@@ -233,6 +246,7 @@ struct ReminderCard: View {
         } catch {
             Logger.data.error("markCompleted save failed: \(error.localizedDescription, privacy: .public)")
             Haptics.error()
+            completionErrorMessage = "Couldn't save the completion. Try again in a moment."
             isCompleting = false
             return
         }
