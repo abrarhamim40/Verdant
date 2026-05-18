@@ -180,8 +180,7 @@ struct ScheduleView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.sage.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .appCard(cornerRadius: 20)
     }
 
     private var greeting: String {
@@ -418,10 +417,9 @@ private struct CompletedReminderRow: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.forestGreen.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .accentCard(tint: .forestGreen, intensity: 0.10, cornerRadius: 14)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .sheet(isPresented: $showEditSheet) {
             EditReminderSheet(reminder: reminder)
         }

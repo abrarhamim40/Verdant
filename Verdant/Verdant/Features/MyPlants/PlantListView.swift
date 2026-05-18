@@ -156,7 +156,7 @@ struct PlantListView: View {
                             NavigationLink(value: plant.id) {
                                 PlantCard(plant: plant)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.pressable)
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.85).combined(with: .opacity),
                                 removal: .scale(scale: 0.9).combined(with: .opacity)

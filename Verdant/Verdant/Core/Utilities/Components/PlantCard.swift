@@ -14,10 +14,12 @@ struct PlantCard: View {
     let plant: Plant
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             photoArea
             metaArea
+                .padding(12)
         }
+        .appCard(cornerRadius: 18)
     }
 
     // MARK: - Photo
@@ -32,13 +34,9 @@ struct PlantCard: View {
 
     @ViewBuilder
     private var photoOrPlaceholder: some View {
-        // The clear Rectangle defines the exact 1:1 sizing — fills the
-        // column width and uses aspectRatio to compute its own height.
-        // The photo lives in .overlay so it fills the container regardless
-        // of source aspect (portrait, landscape, square), with clipped()
-        // trimming whatever overflows. Previously the image's intrinsic
-        // dimensions leaked into layout — pushing siblings narrower or
-        // wider than the column.
+        // 1:1 ratio container — photo as overlay so scaledToFill never leaks
+        // into parent layout. Bottom corners stay square (the meta area is
+        // attached below); top corners get the card's outer rounding.
         Rectangle()
             .fill(Color.sage.opacity(0.3))
             .aspectRatio(1, contentMode: .fit)
@@ -53,8 +51,18 @@ struct PlantCard: View {
                         .foregroundStyle(Color.forestGreen)
                 }
             }
+            .overlay(alignment: .bottom) {
+                // Soft gradient at bottom of photo for a subtle separator
+                // against the white meta area below.
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.12)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 40)
+                .allowsHitTesting(false)
+            }
             .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var healthDot: some View {
