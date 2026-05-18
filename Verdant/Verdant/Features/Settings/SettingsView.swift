@@ -17,6 +17,7 @@ import UIKit
 
 struct SettingsView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("appearancePreference") private var appearanceRaw: String = AppearancePreference.system.rawValue
 
     // SwiftData-backed user preferences. We assume at most one row; if it
     // doesn't exist we create one on first appear so the form has something
@@ -31,9 +32,22 @@ struct SettingsView: View {
 
     private var preferences: UserPreferences? { preferenceRows.first }
 
+    private var appearanceBinding: Binding<AppearancePreference> {
+        Binding(
+            get: { AppearancePreference(rawValue: appearanceRaw) ?? .system },
+            set: { newValue in
+                Haptics.selection()
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                    appearanceRaw = newValue.rawValue
+                }
+            }
+        )
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                appearanceSection
                 notificationsSection
                 preferencesSection
                 aboutSection
@@ -57,6 +71,61 @@ struct SettingsView: View {
             } message: {
                 Text(saveErrorMessage ?? "")
             }
+        }
+    }
+
+    // MARK: - Appearance (day/night)
+
+    private var appearanceSection: some View {
+        Section {
+            HStack(spacing: 14) {
+                // Animated hero glyph that morphs between sun / moon / split-circle
+                // when the picker changes. SF Symbol .replace effect bound to the
+                // current selection so taps trigger the iOS-native cross-fade.
+                ZStack {
+                    Circle()
+                        .fill(appearanceIconTint.opacity(0.18))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: appearanceBinding.wrappedValue.icon)
+                        .font(.title3)
+                        .foregroundStyle(appearanceIconTint)
+                        .contentTransition(.symbolEffect(.replace.byLayer))
+                        .symbolRenderingMode(.hierarchical)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Appearance")
+                        .font(.body)
+                    Text(appearanceBinding.wrappedValue.label)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
+                }
+                Spacer()
+            }
+            .padding(.vertical, 4)
+
+            // Segmented picker that drives the change. .pickerStyle(.segmented)
+            // gives the three options equal weight and uses iOS native styling.
+            Picker("Appearance", selection: appearanceBinding) {
+                ForEach(AppearancePreference.allCases) { mode in
+                    Label(mode.label, systemImage: mode.icon)
+                        .tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+        } header: {
+            Text("Appearance")
+        } footer: {
+            Text("System follows iOS Settings → Display & Brightness. Light and Dark override regardless of the system.")
+        }
+    }
+
+    private var appearanceIconTint: Color {
+        switch appearanceBinding.wrappedValue {
+        case .system: return Color.sage
+        case .light:  return Color.terracotta
+        case .dark:   return Color.forestGreen
         }
     }
 
