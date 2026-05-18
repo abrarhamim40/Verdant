@@ -41,12 +41,22 @@ struct AppleVisionServiceTests {
     }
 
     @Test func ignoresLowConfidenceMatches() {
-        // Below threshold (0.3) should not pass even if the label is plant-y.
+        // Below threshold (0.15) should not pass even if the label is plant-y.
         let classifications: [(String, Float)] = [
-            ("plant", 0.18),
+            ("plant", 0.08),
             ("indoor", 0.92)
         ]
         #expect(AppleVisionService.detectsPlant(in: classifications) == false)
+    }
+
+    @Test func detectsFloraTopLevelLabel() {
+        // Vision's bundled taxonomy uses "flora" / "botanical" as common top-level
+        // labels for plant photos — these previously slipped through and got rejected.
+        let classifications: [(String, Float)] = [
+            ("flora", 0.42),
+            ("outdoor", 0.30)
+        ]
+        #expect(AppleVisionService.detectsPlant(in: classifications))
     }
 
     @Test func detectsSucculentSpecifically() {

@@ -48,11 +48,17 @@ actor AIService {
         // 1. Free on-device pre-filter — block obvious non-plant photos early.
         // Check every photo; if any one looks plant-like we proceed (a stray finger
         // shot in slot 0 shouldn't kill an otherwise-valid scan).
+        // Skipped in simulator: VNClassifyImageRequest runs off the Neural Engine there
+        // and consistently mislabels plants — was blocking every scan during dev testing.
+        #if !targetEnvironment(simulator)
         let isPlant = await vision.anyImageContainsPlant(imageData: images)
         guard isPlant else {
             Logger.ai.info("Apple Vision: no plant detected in any of \(images.count) image(s)")
             throw AIError.noPlantDetected
         }
+        #else
+        Logger.ai.info("Apple Vision pre-filter skipped (simulator) — relying on Plant.id")
+        #endif
 
         // 2. Cache check (skips Plant.id + Gemini if same scan ran within 24h).
         let key = Self.cacheKey(images: images, language: language, climate: climate)
