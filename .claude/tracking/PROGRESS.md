@@ -1,9 +1,9 @@
 # PlantHealth Progress Tracker
 
-**Current Status:** 🟢 Week 4 Day 22-23 — PlantListView grid + disease detection bug fix on `feat/plant-list-grid` (Xcode registration pending)
-**Days until launch:** 67 days
-**Last session:** 2026-05-17 — Day 20-21 merged → Week 3 complete; Day 22-23 PlantCard + PlantListView grid; ALSO bug-fixed disease detection — Plant.id v3 splits health into separate `/health_assessment` endpoint (not gated by `?health=` query on `/identification`). AIService now calls both endpoints in parallel via `async let`, gracefully degrades if health endpoint fails. Verified end-to-end: Dahlia → Botrytis 54% detected, full treatment plan flows through Gemini.
-**Next task:** Register 2 new files in Xcode → confirm Dahlia scan now shows disease section → Day 24-25 (PlantDetailView refinement — current detail screen is minimal Day 14 stub).
+**Current Status:** 🟢 Week 4 Day 26 — Scan history timeline starting on `feat/plant-detail-refine`
+**Days until launch:** 66 days
+**Last session:** 2026-05-18 — Day 24-25 committed (PlantDetailView hero header + care tiles + full TreatmentStepsView + no-scan fallback + toolbar menu). Side commits: Vision pre-filter hotfix (threshold 0.3→0.15 + simulator skip), placeholder 1024 app icon.
+**Next task:** Day 26 — render all PlantScan records as timeline section in PlantDetailView (currently shows only latestScan via `.first`).
 
 ---
 
@@ -48,11 +48,8 @@
 - [x] Day 5: GeminiModels + GeminiService actor (Gemini 2.5 Pro, JSON output mode, markdown stripping) + 10 unit tests
 - [x] Day 6: AppleVisionService (on-device pre-filter) + PlantAnalysisResult (combined model) + AIService coordinator (Vision → Plant.id → Gemini, 24h cache) + 9 tests
 - [x] Day 7: TabView shell polish — Color+Verdant typed extension, @SceneStorage tab persistence, in-memory ModelContainer preview
-- [ ] Day 5: GeminiService + treatment parsing
-- [ ] Day 6: AIService coordinator + caching
-- [ ] Day 7: TabView shell + navigation
 
-**Deliverable:** App opens, scans 1 plant successfully
+**Deliverable:** App opens, scans 1 plant successfully ✅
 
 ### **WEEK 2-3: Core Scan Flow** 🟡 IN PROGRESS
 
@@ -68,21 +65,14 @@ Week 3:
 - [x] Day 17-18: Vision pre-filter polish — nonisolated static keyword set/threshold/`detectsPlant` helper (testable), DEBUG top-5 classification logging, AIService checks all images instead of just first one, 8 unit tests
 - [x] Day 19: Multi-angle improvement — Plant.id was already getting all photos; threaded real `photoCount` through ScanningView → DiagnosisResultView → SavePlantSheet → PlantScan (was hardcoded 1/false), "X angles" badge surfaces on diagnosis + plant detail when ≥2 photos used
 - [x] Day 20-21: Polish — `Haptics` enum (selection/impact/success/error/warning), wired into scan flow + save + retry + cancel + alternatives toggle, state transition animations in ScanningView (opacity+scale success / opacity+slide-up failure), spring animations on photo grid add/remove/load
-- [ ] Day 14: Save to plants flow
 
-Week 3:
-- [ ] Day 15-16: Treatment view + sources
-- [ ] Day 17-18: Apple Vision pre-filter
-- [ ] Day 19: Multi-angle improvement
-- [ ] Day 20-21: Polish + 20 plant tests
-
-**Deliverable:** Complete scan flow end-to-end
+**Deliverable:** Complete scan flow end-to-end ✅
 
 ### **WEEK 4: My Plants** 🟡 IN PROGRESS
 
-- [x] Day 22-23: PlantCard (square card with photo + name + location/scientific + health dot) + PlantListView (2-col LazyVGrid, searchable, filter chips Indoor/Outdoor/Grow light, sort menu) — replaces minimal list from Day 14
-- [ ] Day 24-25: PlantDetailView refinement
-- [ ] Day 26: Scan history timeline
+- [x] Day 22-23: PlantCard (square card with photo + name + location/scientific + health dot) + PlantListView (2-col LazyVGrid, searchable, filter chips Indoor/Outdoor/Grow light, sort menu) — replaces minimal list from Day 14. ALSO bug-fix: Plant.id v3 health detection moved to separate /health_assessment endpoint with parallel async let calls + graceful degradation.
+- [x] Day 24-25: PlantDetailView refinement — hero photo with overlaid serif title + scientific name, 2x2 care setup tile grid, full TreatmentStepsView, inline disease description, no-scan fallback, toolbar ellipsis menu (Edit + Delete stubs for Day 27). Also: Vision pre-filter hotfix (threshold 0.3→0.15 + simulator skip — was rejecting valid scans in dev) and placeholder 1024 app icon to silence Xcode warning.
+- [ ] Day 26: Scan history timeline 🟡 IN PROGRESS
 - [ ] Day 27: Add/edit/delete plants
 - [ ] Day 28: CloudKit sync verification
 
