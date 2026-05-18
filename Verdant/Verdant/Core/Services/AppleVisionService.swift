@@ -23,11 +23,15 @@ actor AppleVisionService {
         "plant", "flower", "leaf", "tree", "vegetation",
         "foliage", "succulent", "herb", "fern", "moss",
         "garden", "bush", "shrub", "grass", "cactus",
-        "vegetable", "fruit", "rose", "orchid", "ivy"
+        "vegetable", "fruit", "rose", "orchid", "ivy",
+        "flora", "botanical", "houseplant", "petal", "stem",
+        "branch", "pottedplant"
     ]
 
     /// Vision's confidence threshold. Below this, the label is ignored as noise.
-    nonisolated static let confidenceThreshold: Float = 0.3
+    /// Kept low because VNClassifyImageRequest is multi-label — even correct top labels
+    /// often sit at 0.15–0.25. Plant.id's own is_plant check catches false positives.
+    nonisolated static let confidenceThreshold: Float = 0.15
 
     /// True if any of the photos look plant-like.
     func anyImageContainsPlant(imageData: [Data]) async -> Bool {

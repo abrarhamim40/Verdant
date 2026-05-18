@@ -4,22 +4,40 @@
 //
 //  Created by Abrar Hamim on 5/17/26.
 //
-//  Day 14 minimal detail view — closes the save flow by giving the user
-//  something meaningful to tap into. Day 24-25 will replace this with the
-//  full detail screen (scan history timeline, edit/delete, care reminders).
+//  Day 14 introduced this as a minimal save-flow closer. Day 24-25 refined it:
+//  hero photo header with name overlay, care setup as a 2x2 tile grid, full
+//  TreatmentStepsView, and toolbar menu with edit/delete stubs.
+//  Day 26 added the scan history timeline (every PlantScan, not just latest).
+//  Day 27 wires the toolbar actions: edit sheet + delete confirmation.
 
 import SwiftUI
 import SwiftData
+import os
 
 struct PlantDetailView: View {
     let plant: Plant
 
-    private var latestScan: PlantScan? {
-        plant.scans?.sorted { $0.date > $1.date }.first
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showEditSheet = false
+    @State private var showDeleteConfirm = false
+
+    private var sortedScans: [PlantScan] {
+        (plant.scans ?? []).sorted { $0.date > $1.date }
+    }
+
+    private var latestScan: PlantScan? { sortedScans.first }
+
+    /// Everything older than the latest scan — Day 26 timeline. The latest scan
+    /// is already shown in detail above, so we slice it off to avoid duplication.
+    private var previousScans: [PlantScan] {
+        Array(sortedScans.dropFirst())
     }
 
     private var latestAnalysis: PlantAnalysisResult? {
         guard let json = latestScan?.analysisJSON,
+              !json.isEmpty,
               let data = json.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(PlantAnalysisResult.self, from: data)
     }
@@ -27,35 +45,32 @@ struct PlantDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                photoHeader
+                PlantHeroHeader(plant: plant)
                 content
+                    .padding(.top, 4)
             }
         }
+        .ignoresSafeArea(edges: .top)
         .background(Color.backgroundPrimary.ignoresSafeArea())
-        .navigationTitle(plant.displayName)
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    // MARK: - Photo
-
-    @ViewBuilder
-    private var photoHeader: some View {
-        if let data = plant.imageData, let image = UIImage(data: data) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(height: 260)
-                .frame(maxWidth: .infinity)
-                .clipped()
-        } else {
-            ZStack {
-                Color.sage.opacity(0.3)
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 56, weight: .light))
-                    .foregroundStyle(Color.forestGreen)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar { toolbarContent }
+        .sheet(isPresented: $showEditSheet) {
+            EditPlantSheet(plant: plant)
+        }
+        .confirmationDialog(
+            "Delete \(plant.displayName)?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete plant", role: .destructive) {
+                deletePlant()
             }
-            .frame(height: 260)
-            .frame(maxWidth: .infinity)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the plant and all its scans. This can't be undone.")
         }
     }
 
@@ -63,34 +78,37 @@ struct PlantDetailView: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 20) {
-            identificationSection
-            careAttributesSection
+            statusRow
+            careSetupSection
             if let analysis = latestAnalysis {
-                latestScanSection(analysis)
+                LatestScanSection(analysis: analysis, scan: latestScan)
+                if !previousScans.isEmpty {
+                    ScanHistoryTimeline(scans: previousScans)
+                }
                 SourceCitationsView(plantDetails: analysis.details)
+            } else {
+                noScanCallout
             }
             footerSection
         }
         .padding(20)
     }
 
-    private var identificationSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(plant.displayName)
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-            if let scientific = plant.scientificName ?? Optional(plant.name), scientific != plant.displayName {
-                Text(scientific)
-                    .font(.subheadline.italic())
-                    .foregroundStyle(.secondary)
-            }
-            HStack(spacing: 8) {
-                healthBadge
-                if let lastCheck = plant.lastHealthCheck {
-                    Text("· Checked \(lastCheck, format: .relative(presentation: .named))")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+    // MARK: - Status row
+
+    private var statusRow: some View {
+        HStack(spacing: 10) {
+            healthBadge
+            if let lastCheck = plant.lastHealthCheck {
+                HStack(spacing: 4) {
+                    Image(systemName: "clock")
+                        .font(.caption2)
+                    Text("Checked \(lastCheck, format: .relative(presentation: .named))")
+                        .font(.caption)
                 }
+                .foregroundStyle(.secondary)
             }
+            Spacer()
         }
     }
 
@@ -107,108 +125,125 @@ struct PlantDetailView: View {
         return HealthBadge(status: status)
     }
 
-    private var careAttributesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    // MARK: - Care setup tiles
+
+    private var careSetupSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Label("Care setup", systemImage: "info.circle.fill")
                 .font(.headline)
                 .foregroundStyle(Color.forestGreen)
 
-            attrRow(icon: "house", label: "Location", value: plant.location ?? "Not set")
-            attrRow(icon: "sun.max", label: "Sunlight", value: plant.sunlightLevel.capitalized)
-            attrRow(icon: plant.indoorOrOutdoor == "indoor" ? "sofa" : "tree", label: "Where", value: plant.indoorOrOutdoor.capitalized)
-            attrRow(
-                icon: "lightbulb",
-                label: "Grow light",
-                value: plant.hasGrowLight ? "Yes" : "No"
-            )
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.sage.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private func attrRow(icon: String, label: String, value: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .frame(width: 22)
-                .foregroundStyle(Color.forestGreen)
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(.subheadline.weight(.medium))
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 12) {
+                careTile(icon: "house", label: "Location", value: plant.location ?? "Not set")
+                careTile(icon: "sun.max", label: "Sunlight", value: plant.sunlightLevel.capitalized)
+                careTile(
+                    icon: plant.indoorOrOutdoor == "indoor" ? "sofa" : "tree",
+                    label: "Where",
+                    value: plant.indoorOrOutdoor.capitalized
+                )
+                careTile(
+                    icon: "lightbulb",
+                    label: "Grow light",
+                    value: plant.hasGrowLight ? "Yes" : "No"
+                )
+            }
         }
     }
 
-    // MARK: - Latest scan
-
-    private func latestScanSection(_ analysis: PlantAnalysisResult) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Label("Latest scan", systemImage: "doc.text.image.fill")
-                    .font(.headline)
+    private func careTile(icon: String, label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.subheadline)
                     .foregroundStyle(Color.forestGreen)
-                Spacer()
-                if let date = latestScan?.date {
-                    Text(date, format: .relative(presentation: .named))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+                Text(label)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
             }
-
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Identified as")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text(analysis.plantName)
-                        .font(.body.weight(.semibold))
-                    if let scan = latestScan, scan.photoCount > 1 {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.stack.3d.up.fill")
-                                .font(.caption2)
-                            Text("\(scan.photoCount) angles")
-                                .font(.caption.weight(.medium))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.sage.opacity(0.20))
-                        .foregroundStyle(Color.forestGreen)
-                        .clipShape(Capsule())
-                    }
-                }
-                Spacer()
-                ConfidenceScoreView(confidence: analysis.confidence)
-            }
-
-            if let disease = analysis.disease, analysis.hasDiseaseDetected {
-                HStack(alignment: .firstTextBaseline) {
-                    Image(systemName: "cross.case.fill")
-                        .foregroundStyle(Color.terracotta)
-                    Text(disease.name)
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
-                    ConfidenceScoreView(confidence: disease.probability, style: .pill)
-                }
-            }
-
-            TreatmentStepsView(plan: analysis.treatment, compact: true)
+            Text(value)
+                .font(.body.weight(.medium))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
         }
-        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.forestGreen.opacity(0.08))
+        .padding(14)
+        .background(Color.sage.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    // MARK: - No scan fallback
+
+    private var noScanCallout: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "photo.badge.exclamationmark")
+                .font(.system(size: 36, weight: .light))
+                .foregroundStyle(.secondary)
+            Text("No scan data")
+                .font(.headline)
+            Text("This plant was saved before scan history existed, or the analysis couldn't be decoded.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .background(Color.sage.opacity(0.10))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - Footer
 
     private var footerSection: some View {
-        Text("Scan history, reminders, and edit options arrive in Week 4.")
+        Text("Edit, delete, and care reminders arrive in Week 4-5.")
             .font(.footnote)
             .foregroundStyle(.tertiary)
             .frame(maxWidth: .infinity)
-            .padding(.top, 8)
+            .padding(.top, 4)
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Menu {
+                Button {
+                    Haptics.selection()
+                    showEditSheet = true
+                } label: {
+                    Label("Edit plant", systemImage: "pencil")
+                }
+
+                Button(role: .destructive) {
+                    Haptics.warning()
+                    showDeleteConfirm = true
+                } label: {
+                    Label("Delete plant", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+            .accessibilityLabel("More actions")
+        }
+    }
+
+    // MARK: - Delete
+
+    private func deletePlant() {
+        let name = plant.displayName
+        modelContext.delete(plant)
+        do {
+            try modelContext.save()
+            Logger.data.info("Deleted plant: \(name, privacy: .public)")
+            Haptics.success()
+            dismiss()
+        } catch {
+            Logger.data.error("Delete failed: \(error.localizedDescription, privacy: .public)")
+            Haptics.error()
+        }
     }
 }
