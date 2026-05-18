@@ -227,6 +227,7 @@ struct ReminderCard: View {
         }
 
         let newDue = reminder.nextDue
+        let chosenTime = reminder.preferredTime
         let isEnabled = reminder.isEnabled
         Task {
             await NotificationService.shared.schedule(
@@ -234,6 +235,7 @@ struct ReminderCard: View {
                 type: type,
                 plantName: plantName,
                 nextDue: newDue,
+                preferredTime: chosenTime,
                 isEnabled: isEnabled
             )
             await MainActor.run { isCompleting = false }

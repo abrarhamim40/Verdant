@@ -189,15 +189,21 @@ struct SavePlantSheet: View {
     /// dismiss immediately. If permission is denied the schedules are silently
     /// skipped; the reminders still exist in SwiftData for future scheduling.
     private func scheduleNotifications(for reminders: [CareReminder], plantName: String) {
+        // Snapshot main-actor model values before the Task so we don't cross
+        // actor boundaries while accessing @Model properties.
+        let payloads = reminders.map {
+            (id: $0.id, type: $0.type, nextDue: $0.nextDue, preferredTime: $0.preferredTime, isEnabled: $0.isEnabled)
+        }
         Task {
             await NotificationService.shared.requestAuthorizationIfNeeded()
-            for reminder in reminders {
+            for payload in payloads {
                 await NotificationService.shared.schedule(
-                    reminderID: reminder.id,
-                    type: reminder.type,
+                    reminderID: payload.id,
+                    type: payload.type,
                     plantName: plantName,
-                    nextDue: reminder.nextDue,
-                    isEnabled: reminder.isEnabled
+                    nextDue: payload.nextDue,
+                    preferredTime: payload.preferredTime,
+                    isEnabled: payload.isEnabled
                 )
             }
         }

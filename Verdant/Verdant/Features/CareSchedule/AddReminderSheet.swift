@@ -157,11 +157,39 @@ struct AddReminderSheet: View {
         return Calendar.current.date(from: components) ?? Date()
     }
 
+    /// First fire = next occurrence of preferredTime hour:minute. If that
+    /// time is still in the future today, fire today. Else fire tomorrow.
+    /// This is what makes "preferredTime = 1 minute from now" actually fire
+    /// in 1 minute — instead of "today + frequencyDays at creation time".
+    private static func firstFireDate(preferredTime: Date, frequencyDays: Int) -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        let time = calendar.dateComponents([.hour, .minute], from: preferredTime)
+
+        var today = calendar.dateComponents([.year, .month, .day], from: now)
+        today.hour = time.hour
+        today.minute = time.minute
+
+        guard let todayAtTime = calendar.date(from: today) else {
+            return calendar.date(byAdding: .day, value: 1, to: now) ?? now
+        }
+
+        if todayAtTime > now {
+            return todayAtTime
+        }
+        return calendar.date(byAdding: .day, value: 1, to: todayAtTime) ?? now
+    }
+
     // MARK: - Save
 
     private func save() {
         let reminder = CareReminder(type: type.rawValue, frequencyDays: frequencyDays)
         reminder.preferredTime = preferredTime
+        // Override the model's default (now + N days, with creation-time-of-day)
+        // so the FIRST fire lands on the user's preferred time. Subsequent
+        // schedules after markCompleted() will use frequencyDays as the model
+        // already does — we just want the first occurrence to be sensible.
+        reminder.nextDue = Self.firstFireDate(preferredTime: preferredTime, frequencyDays: frequencyDays)
         reminder.amount = amount.trimmingCharacters(in: .whitespaces).isEmpty ? nil : amount
         reminder.notes = notes.trimmingCharacters(in: .whitespaces).isEmpty ? nil : notes
         reminder.plant = plant
@@ -184,6 +212,7 @@ struct AddReminderSheet: View {
         let plantName = plant.displayName
         let nextDue = reminder.nextDue
 
+        let chosenTime = preferredTime
         Task {
             // Request permission lazily here too — if the user only ever
             // added a reminder manually (not via the auto-seed save flow)
@@ -194,6 +223,7 @@ struct AddReminderSheet: View {
                 type: reminderType,
                 plantName: plantName,
                 nextDue: nextDue,
+                preferredTime: chosenTime,
                 isEnabled: true
             )
         }

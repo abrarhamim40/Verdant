@@ -60,7 +60,18 @@ actor NotificationService {
     /// Schedules a local notification for the reminder's `nextDue`. Replaces
     /// any pending request already keyed to the same reminder ID, so callers
     /// can re-schedule freely after a completion / backdate / frequency edit.
-    func schedule(reminderID: UUID, type: String, plantName: String, nextDue: Date, isEnabled: Bool) async {
+    ///
+    /// `preferredTime` overrides nextDue's hour:minute — pass the reminder's
+    /// user-set preferred time so notifications fire at the chosen time-of-day
+    /// instead of whatever time the reminder was created.
+    func schedule(
+        reminderID: UUID,
+        type: String,
+        plantName: String,
+        nextDue: Date,
+        preferredTime: Date? = nil,
+        isEnabled: Bool
+    ) async {
         // Always clear the old request first — keeps the pending queue in
         // sync with the model when isEnabled flips off or the date moves.
         await cancel(reminderID: reminderID)
@@ -83,7 +94,7 @@ actor NotificationService {
         ]
 
         let trigger = UNCalendarNotificationTrigger(
-            dateMatching: Self.triggerComponents(for: nextDue),
+            dateMatching: Self.triggerComponents(for: nextDue, preferredTime: preferredTime),
             repeats: false
         )
 
@@ -142,18 +153,33 @@ actor NotificationService {
         }
     }
 
-    /// Snaps reminders to a reasonable hour. If the stored time is before 7 AM
-    /// (e.g. seeded at midnight when Plant was created), bump to 9 AM so the
-    /// user gets the alert during the day instead of overnight.
-    private static func triggerComponents(for date: Date) -> DateComponents {
+    /// Date comes from `nextDue` (which day to fire), time comes from
+    /// `preferredTime` (which hour:minute) when the user picked one. If they
+    /// didn't, we fall back to nextDue's time and snap pre-dawn (< 7 AM)
+    /// values to 9 AM so auto-seeded reminders don't fire overnight.
+    private static func triggerComponents(for date: Date, preferredTime: Date?) -> DateComponents {
         var components = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute],
+            [.year, .month, .day],
             from: date
         )
-        if (components.hour ?? 0) < 7 {
-            components.hour = 9
-            components.minute = 0
+
+        if let preferredTime {
+            // User explicitly chose a time — honor it, no auto-snap.
+            let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: preferredTime)
+            components.hour = timeComponents.hour
+            components.minute = timeComponents.minute
+        } else {
+            // No user preference — use nextDue's time-of-day, snap pre-dawn.
+            let fallback = Calendar.current.dateComponents([.hour, .minute], from: date)
+            if (fallback.hour ?? 0) < 7 {
+                components.hour = 9
+                components.minute = 0
+            } else {
+                components.hour = fallback.hour
+                components.minute = fallback.minute
+            }
         }
+
         return components
     }
 }
