@@ -127,7 +127,7 @@ struct PlantDetailView: View {
             statusRow
             careSetupSection
             if let analysis = latestAnalysis {
-                latestScanSection(analysis)
+                LatestScanSection(analysis: analysis, scan: latestScan)
                 if !previousScans.isEmpty {
                     ScanHistoryTimeline(scans: previousScans)
                 }
@@ -219,75 +219,6 @@ struct PlantDetailView: View {
         .padding(14)
         .background(Color.sage.opacity(0.10))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
-    // MARK: - Latest scan
-
-    private func latestScanSection(_ analysis: PlantAnalysisResult) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Label("Latest scan", systemImage: "doc.text.image.fill")
-                    .font(.headline)
-                    .foregroundStyle(Color.forestGreen)
-                Spacer()
-                if let date = latestScan?.date {
-                    Text(date, format: .relative(presentation: .named))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Identified as")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text(analysis.plantName)
-                        .font(.body.weight(.semibold))
-                    if let scan = latestScan, scan.photoCount > 1 {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.stack.3d.up.fill")
-                                .font(.caption2)
-                            Text("\(scan.photoCount) angles")
-                                .font(.caption.weight(.medium))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.sage.opacity(0.20))
-                        .foregroundStyle(Color.forestGreen)
-                        .clipShape(Capsule())
-                    }
-                }
-                Spacer()
-                ConfidenceScoreView(confidence: analysis.confidence)
-            }
-
-            if let disease = analysis.disease, analysis.hasDiseaseDetected {
-                HStack(alignment: .firstTextBaseline) {
-                    Image(systemName: "cross.case.fill")
-                        .foregroundStyle(Color.terracotta)
-                    Text(disease.name)
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
-                    ConfidenceScoreView(confidence: disease.probability, style: .pill)
-                }
-                if let description = disease.details?.description {
-                    Text(description)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            Divider()
-                .padding(.vertical, 4)
-
-            TreatmentStepsView(plan: analysis.treatment)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.forestGreen.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - No scan fallback
