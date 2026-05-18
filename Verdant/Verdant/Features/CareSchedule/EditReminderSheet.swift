@@ -87,7 +87,7 @@ struct EditReminderSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { save() }
                         .bold()
-                        .disabled(frequencyDays < 1)
+                        .disabled(frequencyValue < 1)
                 }
             }
             .task {

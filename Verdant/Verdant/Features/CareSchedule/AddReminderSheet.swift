@@ -184,7 +184,7 @@ struct AddReminderSheet: View {
         } header: {
             Text("Details")
         } footer: {
-            Text("First notification fires \(frequencyDays) \(frequencyDays == 1 ? "day" : "days") from now at the time you pick here.")
+            Text("First notification fires \(unit.valueLabel(frequencyValue)) from now at the time you pick here.")
         }
     }
 
