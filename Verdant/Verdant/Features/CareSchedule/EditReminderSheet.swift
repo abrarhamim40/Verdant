@@ -113,20 +113,67 @@ struct EditReminderSheet: View {
 
     // MARK: - Sections
 
+    /// Compact single-row header: icon + type label, with a small source chip
+    /// on the right (Custom = terracotta + slider glyph, Suggested = plain).
+    /// Two full LabeledContent rows used to dominate the top of the sheet; this
+    /// keeps the same information available at a glance without the bulk.
     private var summarySection: some View {
         Section {
-            LabeledContent("Type", value: typeLabel)
-            if reminder.customFrequency {
-                LabeledContent {
-                    Label("Custom", systemImage: "slider.horizontal.3")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(Color.terracotta)
-                } label: {
-                    Text("Source")
+            HStack(spacing: 8) {
+                Image(systemName: typeIcon)
+                    .font(.subheadline)
+                    .foregroundStyle(typeTint)
+                Text(typeLabel)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                if reminder.customFrequency {
+                    HStack(spacing: 3) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.caption2)
+                        Text("Custom")
+                            .font(.caption.weight(.medium))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.terracotta.opacity(0.15))
+                    .foregroundStyle(Color.terracotta)
+                    .clipShape(Capsule())
+                } else {
+                    Text("Suggested")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-            } else {
-                LabeledContent("Source", value: "Suggested")
             }
+        }
+    }
+
+    private var typeLabel: String {
+        switch reminder.type {
+        case "watering":    return "Water"
+        case "fertilizing": return "Fertilize"
+        case "pruning":     return "Prune"
+        case "misting":     return "Mist"
+        default:            return reminder.type.capitalized
+        }
+    }
+
+    private var typeIcon: String {
+        switch reminder.type {
+        case "watering":    return "drop.fill"
+        case "fertilizing": return "sparkles"
+        case "pruning":     return "scissors"
+        case "misting":     return "humidity.fill"
+        default:            return "leaf.fill"
+        }
+    }
+
+    private var typeTint: Color {
+        switch reminder.type {
+        case "watering":    return Color.forestGreen
+        case "fertilizing": return Color.terracotta
+        case "pruning":     return Color.sage
+        case "misting":     return Color.sage
+        default:            return Color.forestGreen
         }
     }
 
@@ -262,16 +309,6 @@ struct EditReminderSheet: View {
     }
 
     // MARK: - Helpers
-
-    private var typeLabel: String {
-        switch reminder.type {
-        case "watering":    return "Water"
-        case "fertilizing": return "Fertilize"
-        case "pruning":     return "Prune"
-        case "misting":     return "Mist"
-        default:            return reminder.type.capitalized
-        }
-    }
 
     private var errorBinding: Binding<Bool> {
         Binding(
