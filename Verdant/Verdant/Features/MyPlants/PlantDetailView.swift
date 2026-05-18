@@ -4,10 +4,11 @@
 //
 //  Created by Abrar Hamim on 5/17/26.
 //
-//  Day 14 introduced this as a minimal save-flow closer. Day 24-25 refines it:
+//  Day 14 introduced this as a minimal save-flow closer. Day 24-25 refined it:
 //  hero photo header with name overlay, care setup as a 2x2 tile grid, full
 //  TreatmentStepsView, and toolbar menu with edit/delete stubs.
-//  Day 26 will add scan history timeline; Day 27 wires the toolbar actions.
+//  Day 26 adds scan history timeline (every PlantScan, not just the latest).
+//  Day 27 wires the toolbar actions.
 
 import SwiftUI
 import SwiftData
@@ -18,8 +19,16 @@ struct PlantDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    private var latestScan: PlantScan? {
-        plant.scans?.sorted { $0.date > $1.date }.first
+    private var sortedScans: [PlantScan] {
+        (plant.scans ?? []).sorted { $0.date > $1.date }
+    }
+
+    private var latestScan: PlantScan? { sortedScans.first }
+
+    /// Everything older than the latest scan — Day 26 timeline. The latest scan
+    /// is already shown in detail above, so we slice it off to avoid duplication.
+    private var previousScans: [PlantScan] {
+        Array(sortedScans.dropFirst())
     }
 
     private var latestAnalysis: PlantAnalysisResult? {
@@ -119,6 +128,9 @@ struct PlantDetailView: View {
             careSetupSection
             if let analysis = latestAnalysis {
                 latestScanSection(analysis)
+                if !previousScans.isEmpty {
+                    ScanHistoryTimeline(scans: previousScans)
+                }
                 SourceCitationsView(plantDetails: analysis.details)
             } else {
                 noScanCallout
@@ -301,7 +313,7 @@ struct PlantDetailView: View {
     // MARK: - Footer
 
     private var footerSection: some View {
-        Text("Scan history, edit, and care reminders arrive in Week 4-5.")
+        Text("Edit, delete, and care reminders arrive in Week 4-5.")
             .font(.footnote)
             .foregroundStyle(.tertiary)
             .frame(maxWidth: .infinity)
