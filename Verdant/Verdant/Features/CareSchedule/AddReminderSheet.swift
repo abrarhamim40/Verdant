@@ -20,11 +20,37 @@ struct AddReminderSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var type: ReminderType = .watering
-    @State private var frequencyDays: Int = 7
+    @State private var unit: FrequencyUnit = .days
+    @State private var frequencyValue: Int = 7
     @State private var notes: String = ""
     @State private var amount: String = ""
     @State private var preferredTime: Date = Self.defaultMorning()
     @State private var errorMessage: String?
+
+    /// Days vs hours selector for sub-day reminders like "every 12 hours".
+    enum FrequencyUnit: String, CaseIterable, Identifiable {
+        case days, hours
+        var id: Self { self }
+        var label: String {
+            switch self {
+            case .days:  return "Days"
+            case .hours: return "Hours"
+            }
+        }
+        /// Stepper bounds per unit. Hours clamp at 23 — bigger goes through Days.
+        var range: ClosedRange<Int> {
+            switch self {
+            case .days:  return 1...365
+            case .hours: return 1...23
+            }
+        }
+        func valueLabel(_ value: Int) -> String {
+            switch self {
+            case .days:  return "\(value) \(value == 1 ? "day" : "days")"
+            case .hours: return "\(value) \(value == 1 ? "hour" : "hours")"
+            }
+        }
+    }
 
     /// Picker-friendly type wrapper. The model stores `type` as a String, but
     /// SwiftUI Picker wants Hashable cases — and forcing the dev to pass raw
@@ -78,7 +104,7 @@ struct AddReminderSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add") { save() }
                         .bold()
-                        .disabled(frequencyDays < 1)
+                        .disabled(frequencyValue < 1)
                 }
             }
             .alert("Couldn't add", isPresented: errorBinding) {
@@ -88,8 +114,16 @@ struct AddReminderSheet: View {
             }
             .onChange(of: type) { _, newType in
                 // Reset the stepper to the new type's default whenever the
-                // user switches between watering / pruning / etc.
-                frequencyDays = newType.defaultDays
+                // user switches between watering / pruning / etc. Defaults
+                // are in days; switching to Hours keeps the same numeric value
+                // but the unit picker handles the bounds via clamping below.
+                unit = .days
+                frequencyValue = newType.defaultDays
+            }
+            .onChange(of: unit) { _, newUnit in
+                // Clamp the stepper value into the new unit's range when the
+                // user flips Days <-> Hours.
+                frequencyValue = min(max(frequencyValue, newUnit.range.lowerBound), newUnit.range.upperBound)
             }
         }
     }
@@ -114,16 +148,29 @@ struct AddReminderSheet: View {
 
     private var frequencySection: some View {
         Section {
-            Stepper(value: $frequencyDays, in: 1...365) {
+            Picker("Unit", selection: $unit) {
+                ForEach(FrequencyUnit.allCases) { u in
+                    Text(u.label).tag(u)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Stepper(value: $frequencyValue, in: unit.range) {
                 HStack {
                     Text("Every")
-                    Text("\(frequencyDays) \(frequencyDays == 1 ? "day" : "days")")
+                    Text(unit.valueLabel(frequencyValue))
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.forestGreen)
                 }
             }
         } header: {
             Text("How often")
+        } footer: {
+            if unit == .hours {
+                Text("Use Hours for plants that need care multiple times a day, like seedlings or tropical mistings.")
+            } else {
+                Text("Switch to Hours for sub-day cadences (e.g. every 12 hours).")
+            }
         }
     }
 
@@ -157,11 +204,10 @@ struct AddReminderSheet: View {
         return Calendar.current.date(from: components) ?? Date()
     }
 
-    /// First fire = next occurrence of preferredTime hour:minute. If that
-    /// time is still in the future today, fire today. Else fire tomorrow.
-    /// This is what makes "preferredTime = 1 minute from now" actually fire
-    /// in 1 minute — instead of "today + frequencyDays at creation time".
-    private static func firstFireDate(preferredTime: Date, frequencyDays: Int) -> Date {
+    /// Day-based first fire: next occurrence of preferredTime hour:minute.
+    /// Used when unit is .days so the first daily reminder lands at the
+    /// user's preferred time of day.
+    private static func firstFireDate(preferredTime: Date) -> Date {
         let calendar = Calendar.current
         let now = Date()
         let time = calendar.dateComponents([.hour, .minute], from: preferredTime)
@@ -180,16 +226,30 @@ struct AddReminderSheet: View {
         return calendar.date(byAdding: .day, value: 1, to: todayAtTime) ?? now
     }
 
+    /// Hour-based first fire: simply now + N hours so the next watering on a
+    /// 12-hour cadence lands 12 hours from creation, not "tomorrow at 9 AM".
+    private static func firstFireDate(hoursFromNow hours: Int) -> Date {
+        Calendar.current.date(byAdding: .hour, value: hours, to: Date()) ?? Date()
+    }
+
     // MARK: - Save
 
     private func save() {
-        let reminder = CareReminder(type: type.rawValue, frequencyDays: frequencyDays)
+        // The model's init seeds frequencyDays — we override with sub-day if
+        // the user chose hours so the model arithmetic uses the right unit.
+        let reminder = CareReminder(type: type.rawValue, frequencyDays: 1)
+
+        switch unit {
+        case .days:
+            reminder.frequencyDays = frequencyValue
+            reminder.nextDue = Self.firstFireDate(preferredTime: preferredTime)
+        case .hours:
+            reminder.frequencyHours = frequencyValue
+            reminder.frequencyDays = 1
+            reminder.nextDue = Self.firstFireDate(hoursFromNow: frequencyValue)
+        }
+
         reminder.preferredTime = preferredTime
-        // Override the model's default (now + N days, with creation-time-of-day)
-        // so the FIRST fire lands on the user's preferred time. Subsequent
-        // schedules after markCompleted() will use frequencyDays as the model
-        // already does — we just want the first occurrence to be sensible.
-        reminder.nextDue = Self.firstFireDate(preferredTime: preferredTime, frequencyDays: frequencyDays)
         reminder.amount = amount.trimmingCharacters(in: .whitespaces).isEmpty ? nil : amount
         reminder.notes = notes.trimmingCharacters(in: .whitespaces).isEmpty ? nil : notes
         reminder.plant = plant
