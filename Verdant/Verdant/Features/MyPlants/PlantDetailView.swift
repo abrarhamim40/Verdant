@@ -50,12 +50,9 @@ struct PlantDetailView: View {
                     .padding(.top, 4)
             }
         }
-        .ignoresSafeArea(edges: .top)
         .background(Color.backgroundPrimary.ignoresSafeArea())
-        .navigationTitle("")
+        .navigationTitle(plant.displayName)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar { toolbarContent }
         .sheet(isPresented: $showEditSheet) {
             EditPlantSheet(plant: plant)
@@ -235,11 +232,16 @@ struct PlantDetailView: View {
 
     private func deletePlant() {
         let name = plant.displayName
+        // Snapshot reminder IDs before delete — cascade rule wipes the relationship,
+        // and we need the IDs to cancel the pending UNNotificationRequests too.
+        let reminderIDs = (plant.reminders ?? []).map(\.id)
+
         modelContext.delete(plant)
         do {
             try modelContext.save()
             Logger.data.info("Deleted plant: \(name, privacy: .public)")
             Haptics.success()
+            Task { await NotificationService.shared.cancel(reminderIDs: reminderIDs) }
             dismiss()
         } catch {
             Logger.data.error("Delete failed: \(error.localizedDescription, privacy: .public)")

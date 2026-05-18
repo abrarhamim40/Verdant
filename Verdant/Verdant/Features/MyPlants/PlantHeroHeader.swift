@@ -16,33 +16,53 @@ struct PlantHeroHeader: View {
     private let height: CGFloat = 380
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            photoOrPlaceholder
-                .frame(height: height)
-                .frame(maxWidth: .infinity)
-                .clipped()
+        // The clear Rectangle defines the exact hero dimensions — full
+        // screen width × 380pt tall. The photo lives in .overlay so its
+        // intrinsic size never leaks out into the parent ScrollView
+        // (previously a landscape photo would push the ScrollView wider
+        // than the screen, sliding the body content offscreen sideways).
+        Rectangle()
+            .fill(Color.sage.opacity(0.35))
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .overlay { photoOrPlaceholder }
+            .overlay(alignment: .top) { topGradient }
+            .overlay(alignment: .bottom) { bottomGradient }
+            .overlay(alignment: .bottomLeading) { titleBlock }
+            .clipped()
+    }
 
-            LinearGradient(
-                colors: [.black.opacity(0.35), .clear],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 120)
-            .frame(maxWidth: .infinity, alignment: .top)
-            .allowsHitTesting(false)
-
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.65)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 180)
-            .frame(maxWidth: .infinity, alignment: .bottom)
-            .allowsHitTesting(false)
-
-            titleBlock
+    @ViewBuilder
+    private var photoOrPlaceholder: some View {
+        if let data = plant.imageData, let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image(systemName: "leaf.fill")
+                .font(.system(size: 80, weight: .light))
+                .foregroundStyle(Color.forestGreen)
         }
-        .frame(height: height)
+    }
+
+    private var topGradient: some View {
+        LinearGradient(
+            colors: [.black.opacity(0.35), .clear],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 120)
+        .allowsHitTesting(false)
+    }
+
+    private var bottomGradient: some View {
+        LinearGradient(
+            colors: [.clear, .black.opacity(0.65)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 180)
+        .allowsHitTesting(false)
     }
 
     private var titleBlock: some View {
@@ -61,21 +81,5 @@ struct PlantHeroHeader: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    @ViewBuilder
-    private var photoOrPlaceholder: some View {
-        if let data = plant.imageData, let image = UIImage(data: data) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-        } else {
-            ZStack {
-                Color.sage.opacity(0.35)
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 80, weight: .light))
-                    .foregroundStyle(Color.forestGreen)
-            }
-        }
     }
 }

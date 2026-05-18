@@ -123,7 +123,6 @@ struct AddPlantSheet: View {
 
     private func save() {
         isSaving = true
-        defer { isSaving = false }
 
         let plant = Plant(
             name: trimmedName,
@@ -135,17 +134,40 @@ struct AddPlantSheet: View {
         plant.hasGrowLight = hasGrowLight
         plant.currentHealthStatus = "healthy"
 
+        let reminders = Plant.defaultReminders()
+        for reminder in reminders { reminder.plant = plant }
+
         modelContext.insert(plant)
+        reminders.forEach(modelContext.insert)
 
         do {
             try modelContext.save()
             Logger.data.info("Added plant manually: \(trimmedName, privacy: .public)")
             Haptics.success()
+            scheduleNotifications(for: reminders, plantName: trimmedName)
             dismiss()
         } catch {
+            isSaving = false
             Logger.data.error("Manual add failed: \(error.localizedDescription, privacy: .public)")
             Haptics.error()
             errorMessage = "Couldn't add right now. Try again."
+        }
+    }
+
+    /// Fire-and-forget — permission prompt fires on first save, subsequent
+    /// saves just schedule. Silently skipped if user denies permission.
+    private func scheduleNotifications(for reminders: [CareReminder], plantName: String) {
+        Task {
+            await NotificationService.shared.requestAuthorizationIfNeeded()
+            for reminder in reminders {
+                await NotificationService.shared.schedule(
+                    reminderID: reminder.id,
+                    type: reminder.type,
+                    plantName: plantName,
+                    nextDue: reminder.nextDue,
+                    isEnabled: reminder.isEnabled
+                )
+            }
         }
     }
 }

@@ -70,4 +70,14 @@ extension Plant {
         plant.scientificName = "Monstera deliciosa"
         return plant
     }
+
+    /// Default care reminders seeded on every new plant. Watering + fertilizing
+    /// are universal enough to auto-create; pruning + misting are species-
+    /// dependent and the user adds them later from the ScheduleView (Day 31-32).
+    static func defaultReminders() -> [CareReminder] {
+        [
+            CareReminder(type: "watering", frequencyDays: 7),
+            CareReminder(type: "fertilizing", frequencyDays: 30)
+        ]
+    }
 }

@@ -32,25 +32,29 @@ struct PlantCard: View {
 
     @ViewBuilder
     private var photoOrPlaceholder: some View {
-        if let data = plant.imageData, let image = UIImage(data: data) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(height: 160)
-                .frame(maxWidth: .infinity)
-                .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        } else {
-            ZStack {
-                Color.sage.opacity(0.3)
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 40, weight: .light))
-                    .foregroundStyle(Color.forestGreen)
+        // The clear Rectangle defines the exact 1:1 sizing — fills the
+        // column width and uses aspectRatio to compute its own height.
+        // The photo lives in .overlay so it fills the container regardless
+        // of source aspect (portrait, landscape, square), with clipped()
+        // trimming whatever overflows. Previously the image's intrinsic
+        // dimensions leaked into layout — pushing siblings narrower or
+        // wider than the column.
+        Rectangle()
+            .fill(Color.sage.opacity(0.3))
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                if let data = plant.imageData, let image = UIImage(data: data) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: 36, weight: .light))
+                        .foregroundStyle(Color.forestGreen)
+                }
             }
-            .frame(height: 160)
-            .frame(maxWidth: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var healthDot: some View {
