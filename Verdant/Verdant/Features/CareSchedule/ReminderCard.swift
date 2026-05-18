@@ -36,6 +36,7 @@ struct ReminderCard: View {
             .modifier(ReminderCardBackground(isOverdue: reminder.isOverdue))
         }
         .buttonStyle(.pressable)
+        .accessibilityHint("Double tap to edit. Use the check on the right to mark this care done.")
         .sheet(isPresented: $showEditSheet) {
             EditReminderSheet(reminder: reminder)
         }

@@ -420,6 +420,8 @@ private struct CompletedReminderRow: View {
             .accentCard(tint: .forestGreen, intensity: 0.10, cornerRadius: 14)
         }
         .buttonStyle(.pressable)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Double tap to edit, undo, or backdate this reminder.")
         .sheet(isPresented: $showEditSheet) {
             EditReminderSheet(reminder: reminder)
         }

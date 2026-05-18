@@ -20,6 +20,24 @@ struct PlantCard: View {
                 .padding(12)
         }
         .appCard(cornerRadius: 18)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint("Double tap to see this plant's details and scan history.")
+    }
+
+    /// Single phrase VoiceOver reads instead of scraping every text node
+    /// inside the card. Includes name, location/scientific fallback, and
+    /// the current health status so users know which plants need attention
+    /// without opening each card.
+    private var accessibilitySummary: String {
+        var parts: [String] = [plant.displayName]
+        if let location = plant.location, !location.isEmpty {
+            parts.append("in \(location)")
+        } else if let scientific = plant.scientificName, scientific != plant.displayName {
+            parts.append(scientific)
+        }
+        parts.append("status \(plant.currentHealthStatus)")
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Photo
