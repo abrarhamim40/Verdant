@@ -27,6 +27,11 @@ struct EditReminderSheet: View {
     @State private var showDeleteConfirm = false
     @State private var errorMessage: String?
 
+    // Day 34 — undo + backdate state. Default backdate to "yesterday at the
+    // preferred time" so the most common path (forgot to mark yesterday) is
+    // one tap away.
+    @State private var backdateDate: Date = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+
     init(reminder: CareReminder) {
         self.reminder = reminder
         _frequencyDays = State(initialValue: reminder.frequencyDays)
@@ -43,6 +48,7 @@ struct EditReminderSheet: View {
                 frequencySection
                 detailsSection
                 statusSection
+                historySection
                 dangerSection
             }
             .navigationTitle(reminder.plant?.displayName ?? "Reminder")
@@ -145,6 +151,59 @@ struct EditReminderSheet: View {
         }
     }
 
+    // MARK: - History (Day 34: undo + backdate)
+
+    @ViewBuilder
+    private var historySection: some View {
+        Section {
+            DatePicker(
+                "Log a past completion",
+                selection: $backdateDate,
+                in: ...Date(),
+                displayedComponents: .date
+            )
+            Button {
+                logBackdate()
+            } label: {
+                Label("Mark done at this date", systemImage: "calendar.badge.checkmark")
+            }
+            .disabled(backdateDate > Date())
+
+            if !reminder.completionHistory.isEmpty {
+                Button(role: .destructive) {
+                    undoLast()
+                } label: {
+                    Label("Undo last completion", systemImage: "arrow.uturn.backward")
+                }
+            }
+
+            ForEach(recentCompletions, id: \.self) { date in
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.forestGreen)
+                    Text(date, format: .dateTime.day().month(.abbreviated).year())
+                        .font(.subheadline)
+                    Spacer()
+                    Text(date, format: .relative(presentation: .named))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("History")
+        } footer: {
+            if reminder.completionHistory.isEmpty {
+                Text("Forgot to log something? Pick a past date and tap \"Mark done at this date\". Tapped ✓ by mistake? Use \"Undo last completion\".")
+            } else {
+                Text("Most recent first. Backdating updates streak; undo removes the last completion.")
+            }
+        }
+    }
+
+    private var recentCompletions: [Date] {
+        Array(reminder.completionHistory.reversed().prefix(5))
+    }
+
     private var dangerSection: some View {
         Section {
             Button(role: .destructive) {
@@ -230,6 +289,55 @@ struct EditReminderSheet: View {
         }
 
         dismiss()
+    }
+
+    // MARK: - Undo + backdate (Day 34)
+
+    private func undoLast() {
+        guard !reminder.completionHistory.isEmpty else { return }
+        Haptics.warning()
+        reminder.undoLastCompletion()
+        persistAndReschedule(label: "undo")
+    }
+
+    private func logBackdate() {
+        // Snap to noon on the picked day so it sorts cleanly and the
+        // notification recalc lands on a sensible hour.
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: backdateDate)
+        components.hour = 12
+        let snapped = Calendar.current.date(from: components) ?? backdateDate
+
+        Haptics.success()
+        reminder.backdate(to: snapped)
+        persistAndReschedule(label: "backdate")
+    }
+
+    private func persistAndReschedule(label: String) {
+        let reminderID = reminder.id
+        let type = reminder.type
+        let plantName = reminder.plant?.displayName ?? "Plant"
+        let nextDue = reminder.nextDue
+        let isEnabled = reminder.isEnabled
+
+        do {
+            try modelContext.save()
+            Logger.data.info("\(label, privacy: .public) \(type, privacy: .public) for \(plantName, privacy: .public)")
+        } catch {
+            Logger.data.error("\(label, privacy: .public) save failed: \(error.localizedDescription, privacy: .public)")
+            Haptics.error()
+            errorMessage = "Couldn't update right now. Try again."
+            return
+        }
+
+        Task {
+            await NotificationService.shared.schedule(
+                reminderID: reminderID,
+                type: type,
+                plantName: plantName,
+                nextDue: nextDue,
+                isEnabled: isEnabled
+            )
+        }
     }
 
     // MARK: - Delete
