@@ -5,9 +5,10 @@
 //  Created by Abrar Hamim on 5/19/26.
 //
 //  Day 31-32 — central care schedule. Replaces the Home tab placeholder.
-//  Groups every enabled CareReminder into Overdue / Today / This week / Later
-//  buckets so the user sees the most urgent care at the top. Mark-done lives
-//  on the ReminderCard itself.
+//  Time-of-day greeting, today's progress bar, streak chip, Overdue / Today /
+//  This week / Later buckets, and a Completed today section that catches
+//  finished reminders so the user sees their accomplishment instead of the
+//  card vanishing into a future bucket.
 
 import SwiftUI
 import SwiftData
@@ -21,11 +22,10 @@ struct ScheduleView: View {
 
     @Query private var plants: [Plant]
 
-    /// iOS denial state — banner appears in the header until the user opens Settings
-    /// and toggles notifications back on. Re-checked when the app returns to the
-    /// foreground so the banner disappears automatically once they fix it.
     @State private var authState: NotificationService.AuthorizationState = .notDetermined
     @Environment(\.scenePhase) private var scenePhase
+
+    private let calendar = Calendar.current
 
     var body: some View {
         NavigationStack {
@@ -54,11 +54,44 @@ struct ScheduleView: View {
         authState = await NotificationService.shared.authorizationState()
     }
 
-    // MARK: - Sections
+    // MARK: - Active / completed split
+
+    /// Reminders that still need action today or later.
+    private var activeReminders: [CareReminder] {
+        reminders.filter { reminder in
+            guard let last = reminder.lastCompleted else { return true }
+            return !calendar.isDateInToday(last)
+        }
+    }
+
+    /// Reminders the user already finished today — surface them so the
+    /// "I just tapped ✓ and the card vanished" feeling goes away.
+    private var completedTodayReminders: [CareReminder] {
+        reminders.filter { reminder in
+            guard let last = reminder.lastCompleted else { return false }
+            return calendar.isDateInToday(last)
+        }
+        .sorted { ($0.lastCompleted ?? .distantPast) > ($1.lastCompleted ?? .distantPast) }
+    }
+
+    private var dueTodayCount: Int {
+        let startOfToday = calendar.startOfDay(for: Date())
+        let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? Date()
+        return activeReminders.filter { $0.nextDue < endOfToday }.count + completedTodayReminders.count
+    }
+
+    private var doneTodayCount: Int {
+        completedTodayReminders.count
+    }
+
+    private var maxStreak: Int {
+        reminders.map(\.streak).max() ?? 0
+    }
+
+    // MARK: - Bucketing
 
     private var groupedReminders: [Section] {
         let now = Date()
-        let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: now)
         let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? now
         let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfToday) ?? now
@@ -68,7 +101,7 @@ struct ScheduleView: View {
         var thisWeek: [CareReminder] = []
         var later: [CareReminder] = []
 
-        for reminder in reminders {
+        for reminder in activeReminders {
             if reminder.nextDue < startOfToday {
                 overdue.append(reminder)
             } else if reminder.nextDue < endOfToday {
@@ -88,7 +121,7 @@ struct ScheduleView: View {
         return sections
     }
 
-    // MARK: - Schedule
+    // MARK: - Schedule body
 
     private var schedule: some View {
         ScrollView {
@@ -96,18 +129,183 @@ struct ScheduleView: View {
                 if authState == .denied {
                     notificationsDeniedBanner
                 }
-                summaryHeader
+                heroHeader
                 ForEach(groupedReminders) { section in
                     sectionView(section)
                 }
+                if !completedTodayReminders.isEmpty {
+                    completedTodaySection
+                }
             }
             .padding(20)
+            .animation(.easeInOut(duration: 0.25), value: completedTodayReminders.count)
         }
     }
 
-    /// iOS only allows the permission prompt once. After denial the app cannot
-    /// re-ask — the user has to flip it on themselves in Settings. This banner
-    /// makes the dead-end visible and deep-links them straight there.
+    // MARK: - Hero header (greeting + progress + streak)
+
+    private var heroHeader: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Image(systemName: timeOfDayIcon)
+                            .font(.title3)
+                            .foregroundStyle(Color.terracotta)
+                        Text(greeting)
+                            .font(.system(.title2, design: .serif).weight(.semibold))
+                    }
+                    Text(Date(), format: .dateTime.weekday(.wide).day().month(.wide))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if maxStreak >= 2 {
+                    streakChip
+                }
+            }
+            progressBlock
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.sage.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var greeting: String {
+        let hour = calendar.component(.hour, from: Date())
+        switch hour {
+        case 4..<12:  return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<22: return "Good evening"
+        default:      return "Late night"
+        }
+    }
+
+    private var timeOfDayIcon: String {
+        let hour = calendar.component(.hour, from: Date())
+        switch hour {
+        case 5..<12:  return "sunrise.fill"
+        case 12..<17: return "sun.max.fill"
+        case 17..<20: return "sun.horizon.fill"
+        default:      return "moon.stars.fill"
+        }
+    }
+
+    private var streakChip: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "flame.fill")
+                .font(.caption.weight(.bold))
+            Text("\(maxStreak) streak")
+                .font(.caption.weight(.semibold))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.terracotta.opacity(0.15))
+        .foregroundStyle(Color.terracotta)
+        .clipShape(Capsule())
+    }
+
+    @ViewBuilder
+    private var progressBlock: some View {
+        if dueTodayCount > 0 {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("\(doneTodayCount) of \(dueTodayCount) done")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    if doneTodayCount == dueTodayCount {
+                        Text("🌿 all caught up")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Color.forestGreen)
+                    } else {
+                        Text("\(Int((Double(doneTodayCount) / Double(dueTodayCount)) * 100))%")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                GeometryReader { proxy in
+                    let progress = Double(doneTodayCount) / Double(dueTodayCount)
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.sage.opacity(0.25))
+                        Capsule()
+                            .fill(Color.forestGreen)
+                            .frame(width: max(8, proxy.size.width * progress))
+                            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: progress)
+                    }
+                }
+                .frame(height: 10)
+            }
+        } else {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(Color.forestGreen)
+                Text("No care due today — relax")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - Sections
+
+    private func sectionView(_ section: Section) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Label(section.kind.title, systemImage: section.kind.icon)
+                    .font(.headline)
+                    .foregroundStyle(section.kind.tint)
+                Spacer()
+                Text("\(section.items.count)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.sage.opacity(0.20))
+                    .clipShape(Capsule())
+            }
+            VStack(spacing: 8) {
+                ForEach(section.items) { reminder in
+                    ReminderCard(reminder: reminder)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.95).combined(with: .opacity),
+                            removal: .opacity.combined(with: .move(edge: .trailing))
+                        ))
+                }
+            }
+        }
+    }
+
+    private var completedTodaySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Label("Completed today", systemImage: "checkmark.seal.fill")
+                    .font(.headline)
+                    .foregroundStyle(Color.forestGreen)
+                Spacer()
+                Text("\(completedTodayReminders.count)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.forestGreen)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.forestGreen.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+            VStack(spacing: 8) {
+                ForEach(completedTodayReminders) { reminder in
+                    CompletedReminderRow(reminder: reminder)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.97).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                }
+            }
+        }
+    }
+
+    // MARK: - Banner
+
     private var notificationsDeniedBanner: some View {
         Button {
             Haptics.selection()
@@ -144,51 +342,6 @@ struct ScheduleView: View {
         UIApplication.shared.open(url)
     }
 
-    private var summaryHeader: some View {
-        let overdueCount = reminders.filter { $0.isOverdue }.count
-        return VStack(alignment: .leading, spacing: 6) {
-            Text(headlineForToday)
-                .font(.system(.title2, design: .serif).weight(.semibold))
-            if overdueCount > 0 {
-                Text("\(overdueCount) overdue · take care of these first")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.terracotta)
-            } else {
-                Text("\(plants.count) plant\(plants.count == 1 ? "" : "s") · \(reminders.count) reminder\(reminders.count == 1 ? "" : "s") on the schedule")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var headlineForToday: String {
-        let date = Date().formatted(.dateTime.weekday(.wide).day().month(.wide))
-        return date
-    }
-
-    private func sectionView(_ section: Section) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Label(section.kind.title, systemImage: section.kind.icon)
-                    .font(.headline)
-                    .foregroundStyle(section.kind.tint)
-                Spacer()
-                Text("\(section.items.count)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color.sage.opacity(0.20))
-                    .clipShape(Capsule())
-            }
-            VStack(spacing: 8) {
-                ForEach(section.items) { reminder in
-                    ReminderCard(reminder: reminder)
-                }
-            }
-        }
-    }
-
     // MARK: - Empty states
 
     private var emptyState: some View {
@@ -204,6 +357,60 @@ struct ScheduleView: View {
             Label("All caught up", systemImage: "checkmark.circle.fill")
         } description: {
             Text("Every reminder is paused. Re-enable one from a plant's detail screen to bring it back here.")
+        }
+    }
+}
+
+// MARK: - Completed row (slim card for accomplishments)
+
+private struct CompletedReminderRow: View {
+    let reminder: CareReminder
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.forestGreen)
+                    .frame(width: 36, height: 36)
+                Image(systemName: "checkmark")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(reminder.plant?.displayName ?? "Unknown plant")
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Text("·")
+                        .foregroundStyle(.tertiary)
+                    Text(typeLabel)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Text("Next in \(reminder.frequencyDays) \(reminder.frequencyDays == 1 ? "day" : "days")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            if let lastCompleted = reminder.lastCompleted {
+                Text(lastCompleted, format: .dateTime.hour().minute())
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.forestGreen.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private var typeLabel: String {
+        switch reminder.type {
+        case "watering":    return "Watered"
+        case "fertilizing": return "Fertilized"
+        case "pruning":     return "Pruned"
+        case "misting":     return "Misted"
+        default:            return reminder.type.capitalized
         }
     }
 }
