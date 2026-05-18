@@ -33,10 +33,9 @@ struct ReminderCard: View {
                 doneButton
             }
             .padding(12)
-            .background(cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .modifier(ReminderCardBackground(isOverdue: reminder.isOverdue))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .sheet(isPresented: $showEditSheet) {
             EditReminderSheet(reminder: reminder)
         }
@@ -149,16 +148,6 @@ struct ReminderCard: View {
 
     // MARK: - Background
 
-    private var cardBackground: some View {
-        Group {
-            if reminder.isOverdue {
-                Color.terracotta.opacity(0.10)
-            } else {
-                Color.sage.opacity(0.10)
-            }
-        }
-    }
-
     // MARK: - Mapping
 
     private var typeLabel: String {
@@ -260,6 +249,21 @@ struct ReminderCard: View {
                 isEnabled: isEnabled
             )
             await MainActor.run { isCompleting = false }
+        }
+    }
+}
+
+/// Picks the card background based on overdue state. Overdue cards use the
+/// terracotta-tinted accent card so they read as urgent; regular cards get the
+/// neutral appCard surface.
+private struct ReminderCardBackground: ViewModifier {
+    let isOverdue: Bool
+
+    func body(content: Content) -> some View {
+        if isOverdue {
+            content.accentCard(tint: .terracotta, intensity: 0.14, cornerRadius: 16)
+        } else {
+            content.appCard(cornerRadius: 16)
         }
     }
 }
