@@ -38,8 +38,29 @@ struct VerdantApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            ContentRoot()
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+/// Gates the first-launch experience: the OnboardingView runs once, sets
+/// hasCompletedOnboarding via @AppStorage, and the user lands on the tab
+/// bar from then on. Cross-fades between the two so the transition feels
+/// designed rather than abrupt.
+private struct ContentRoot: View {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
+    var body: some View {
+        ZStack {
+            if hasCompletedOnboarding {
+                RootView()
+                    .transition(.opacity)
+            } else {
+                OnboardingView()
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: hasCompletedOnboarding)
     }
 }
