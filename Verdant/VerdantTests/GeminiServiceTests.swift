@@ -164,7 +164,7 @@ struct GeminiServiceTests {
     }
 
     @Test func parseGeminiResponseThrowsOnMaxTokens() throws {
-        // Mimics gemini-2.5-flash truncating with thinking enabled and a small output budget.
+        // Mimics gemini-3.5-flash truncating when thinking is enabled with a small output budget.
         let envelope = """
         {
           "candidates": [
