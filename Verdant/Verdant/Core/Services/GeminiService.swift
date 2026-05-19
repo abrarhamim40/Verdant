@@ -19,7 +19,7 @@ actor GeminiService {
 
     init(
         apiKey: String? = nil,
-        model: String = "gemini-2.5-flash",
+        model: String = "gemini-3.5-flash",
         session: URLSession? = nil
     ) {
         self.apiKey = apiKey ?? APIKeys.gemini
