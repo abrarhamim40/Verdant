@@ -23,6 +23,13 @@ struct ScanView: View {
     @State private var errorMessage: String?
     @State private var activeScan: ScanRequest?
 
+    // Blueprint §4 monetisation gate. AdGateway is the dev-mock; Week 6 swaps in
+    // the real AdMob-backed GADRewardedAdGateway with the same signature.
+    @ObservedObject private var entitlement = Entitlement.shared
+    @State private var adGateway: any AdGateway = MockAdGateway()
+    @State private var showAdWall = false
+    @State private var pendingScanRequest: ScanRequest?
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -72,6 +79,23 @@ struct ScanView: View {
                 Button("OK") { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
+            }
+            .sheet(isPresented: $showAdWall) {
+                AdWallSheet(
+                    adGateway: adGateway,
+                    onUnlock: {
+                        entitlement.grantAdUnlock()
+                        showAdWall = false
+                        if let pending = pendingScanRequest {
+                            activeScan = pending
+                            pendingScanRequest = nil
+                        }
+                    },
+                    onCancel: {
+                        showAdWall = false
+                        pendingScanRequest = nil
+                    }
+                )
             }
         }
     }
@@ -185,9 +209,7 @@ struct ScanView: View {
 
     private var identifyButton: some View {
         Button {
-            Haptics.impact(.medium)
-            let imagesData = photos.map(\.optimizedData)
-            activeScan = ScanRequest(images: imagesData)
+            startScan()
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "wand.and.stars")
@@ -203,13 +225,52 @@ struct ScanView: View {
         .disabled(isLoadingPhotos)
     }
 
+    /// Permission gate before triggering an actual scan navigation. Free users with
+    /// quota or a valid ad-unlock proceed straight to ScanningView; everyone else
+    /// stashes the request and the AdWallSheet drives the rest.
+    private func startScan() {
+        Haptics.impact(.medium)
+        let imagesData = photos.map(\.optimizedData)
+        let request = ScanRequest(images: imagesData)
+
+        switch entitlement.currentPermission() {
+        case .allowed:
+            activeScan = request
+        case .requiresAds:
+            pendingScanRequest = request
+            showAdWall = true
+        }
+    }
+
     private var helperText: some View {
-        Text(photos.count >= Self.maxPhotos
-             ? "Maximum 3 photos. Tap × to swap one out."
-             : "\(photos.count) of \(Self.maxPhotos) selected. Add more for higher accuracy.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
+        VStack(spacing: 6) {
+            Text(photos.count >= Self.maxPhotos
+                 ? "Maximum 3 photos. Tap × to swap one out."
+                 : "\(photos.count) of \(Self.maxPhotos) selected. Add more for higher accuracy.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            scansRemainingBadge
+        }
+    }
+
+    @ViewBuilder
+    private var scansRemainingBadge: some View {
+        if !entitlement.isPremium {
+            let remaining = entitlement.remainingFreeScans
+            HStack(spacing: 4) {
+                Image(systemName: remaining > 0 ? "leaf.fill" : "play.rectangle.fill")
+                Text(remaining > 0
+                     ? "\(remaining) free scan\(remaining == 1 ? "" : "s") left this month"
+                     : "Watch 2 ads to scan more")
+            }
+            .font(.caption.weight(.medium))
+            .foregroundStyle(remaining > 0 ? Color.forestGreen : Color.terracotta)
+            .padding(.top, 2)
+            .accessibilityLabel(remaining > 0
+                                ? "\(remaining) free scans remaining this month"
+                                : "Free quota used. Watch 2 ads to unlock another scan.")
+        }
     }
 
     // MARK: - Bindings
