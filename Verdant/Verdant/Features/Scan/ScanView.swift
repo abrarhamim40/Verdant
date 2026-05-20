@@ -34,6 +34,7 @@ struct ScanView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
+                    scansRemainingBadge
                     photoArea
                     captureButtons
                     if !photos.isEmpty {
@@ -112,6 +113,28 @@ struct ScanView: View {
             }
             .accessibilityLabel("Photo tips")
         }
+        #if DEBUG
+        ToolbarItem(placement: .topBarLeading) {
+            Menu {
+                Section("Quota") {
+                    Button("Burn 1 free scan") { entitlement.recordScanCompleted() }
+                    Button("Reset month + ad unlock") { entitlement._debugResetCounters() }
+                }
+                Section("Tokens") {
+                    Button("Grant ad unlock") { entitlement.grantAdUnlock() }
+                }
+                Section("Tier") {
+                    Button(entitlement.isPremium ? "Downgrade to Free" : "Upgrade to Premium") {
+                        entitlement.setPremium(!entitlement.isPremium)
+                    }
+                }
+            } label: {
+                Image(systemName: "ladybug.fill")
+                    .foregroundStyle(.orange)
+            }
+            .accessibilityLabel("Debug menu")
+        }
+        #endif
     }
 
     // MARK: - Photo area
@@ -243,30 +266,32 @@ struct ScanView: View {
     }
 
     private var helperText: some View {
-        VStack(spacing: 6) {
-            Text(photos.count >= Self.maxPhotos
-                 ? "Maximum 3 photos. Tap × to swap one out."
-                 : "\(photos.count) of \(Self.maxPhotos) selected. Add more for higher accuracy.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            scansRemainingBadge
-        }
+        Text(photos.count >= Self.maxPhotos
+             ? "Maximum 3 photos. Tap × to swap one out."
+             : "\(photos.count) of \(Self.maxPhotos) selected. Add more for higher accuracy.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
     }
 
+    /// Always-visible status pill so a fresh free user sees their budget on first
+    /// open, not only after they've selected photos. Premium users see no pill.
     @ViewBuilder
     private var scansRemainingBadge: some View {
         if !entitlement.isPremium {
             let remaining = entitlement.remainingFreeScans
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: remaining > 0 ? "leaf.fill" : "play.rectangle.fill")
                 Text(remaining > 0
                      ? "\(remaining) free scan\(remaining == 1 ? "" : "s") left this month"
                      : "Watch 2 ads to scan more")
             }
-            .font(.caption.weight(.medium))
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background((remaining > 0 ? Color.forestGreen : Color.terracotta).opacity(0.14))
             .foregroundStyle(remaining > 0 ? Color.forestGreen : Color.terracotta)
-            .padding(.top, 2)
+            .clipShape(Capsule())
             .accessibilityLabel(remaining > 0
                                 ? "\(remaining) free scans remaining this month"
                                 : "Free quota used. Watch 2 ads to unlock another scan.")

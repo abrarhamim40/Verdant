@@ -139,4 +139,14 @@ final class Entitlement: ObservableObject {
         static let hasAdUnlock = "verdant.entitlement.hasAdUnlock"
         static let lastResetMonth = "verdant.entitlement.lastResetMonth"
     }
+
+    #if DEBUG
+    /// DEBUG-only helper for the in-app debug menu. Zeros the monthly counter and
+    /// clears any ad-unlock token without waiting for a month rollover. Premium
+    /// flag is untouched — use setPremium(_:) to toggle that separately.
+    func _debugResetCounters() {
+        freeScansUsedThisMonth = 0
+        hasAdUnlock = false
+    }
+    #endif
 }
