@@ -11,6 +11,7 @@
 //  See .claude/launch-prep/10-production-blueprint.md §4 and §6.2.
 
 import Foundation
+import Combine
 
 @MainActor
 final class Entitlement: ObservableObject {
