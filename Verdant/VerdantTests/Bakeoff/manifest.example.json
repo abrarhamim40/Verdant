@@ -1,0 +1,124 @@
+{
+  "photos": [
+    {
+      "file": "common/monstera_deliciosa.jpg",
+      "category": "common",
+      "expected_species": "Monstera deliciosa",
+      "expected_common": "Swiss Cheese Plant"
+    },
+    {
+      "file": "common/snake_plant.jpg",
+      "category": "common",
+      "expected_species": "Dracaena trifasciata",
+      "expected_common": "Snake Plant"
+    },
+    {
+      "file": "common/pothos_golden.jpg",
+      "category": "common",
+      "expected_species": "Epipremnum aureum",
+      "expected_common": "Golden Pothos"
+    },
+    {
+      "file": "common/peace_lily.jpg",
+      "category": "common",
+      "expected_species": "Spathiphyllum wallisii",
+      "expected_common": "Peace Lily"
+    },
+    {
+      "file": "common/aloe_vera.jpg",
+      "category": "common",
+      "expected_species": "Aloe vera",
+      "expected_common": "Aloe Vera"
+    },
+    {
+      "file": "common/rubber_plant.jpg",
+      "category": "common",
+      "expected_species": "Ficus elastica",
+      "expected_common": "Rubber Plant"
+    },
+    {
+      "file": "common/zz_plant.jpg",
+      "category": "common",
+      "expected_species": "Zamioculcas zamiifolia",
+      "expected_common": "ZZ Plant"
+    },
+    {
+      "file": "common/spider_plant.jpg",
+      "category": "common",
+      "expected_species": "Chlorophytum comosum",
+      "expected_common": "Spider Plant"
+    },
+    {
+      "file": "common/fiddle_leaf_fig.jpg",
+      "category": "common",
+      "expected_species": "Ficus lyrata",
+      "expected_common": "Fiddle Leaf Fig"
+    },
+    {
+      "file": "common/jade_plant.jpg",
+      "category": "common",
+      "expected_species": "Crassula ovata",
+      "expected_common": "Jade Plant"
+    },
+    {
+      "file": "cultivars/peace_rose.jpg",
+      "category": "cultivar",
+      "expected_species": "Rosa 'Peace'",
+      "expected_common": "Peace Rose"
+    },
+    {
+      "file": "cultivars/double_delight_rose.jpg",
+      "category": "cultivar",
+      "expected_species": "Rosa 'Double Delight'",
+      "expected_common": "Double Delight Rose"
+    },
+    {
+      "file": "cultivars/iceberg_rose.jpg",
+      "category": "cultivar",
+      "expected_species": "Rosa 'Iceberg'",
+      "expected_common": "Iceberg Rose"
+    },
+    {
+      "file": "cultivars/phalaenopsis_white.jpg",
+      "category": "cultivar",
+      "expected_species": "Phalaenopsis amabilis",
+      "expected_common": "Moon Orchid"
+    },
+    {
+      "file": "cultivars/dendrobium_nobile.jpg",
+      "category": "cultivar",
+      "expected_species": "Dendrobium nobile",
+      "expected_common": "Noble Dendrobium"
+    },
+    {
+      "file": "cultivars/monstera_thai_constellation.jpg",
+      "category": "cultivar",
+      "expected_species": "Monstera deliciosa 'Thai Constellation'",
+      "expected_common": "Thai Constellation"
+    },
+    {
+      "file": "cultivars/philodendron_pink_princess.jpg",
+      "category": "cultivar",
+      "expected_species": "Philodendron erubescens 'Pink Princess'",
+      "expected_common": "Pink Princess"
+    },
+    {
+      "file": "cultivars/calathea_orbifolia.jpg",
+      "category": "cultivar",
+      "expected_species": "Goeppertia orbifolia",
+      "expected_common": "Orbifolia"
+    },
+    {
+      "file": "cultivars/echeveria_lola.jpg",
+      "category": "cultivar",
+      "expected_species": "Echeveria 'Lola'",
+      "expected_common": "Lola Echeveria"
+    },
+    {
+      "file": "cultivars/sansevieria_moonshine.jpg",
+      "category": "cultivar",
+      "expected_species": "Dracaena trifasciata 'Moonshine'",
+      "expected_common": "Moonshine Snake Plant"
+    }
+  ]
+}
