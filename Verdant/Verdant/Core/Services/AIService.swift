@@ -65,6 +65,9 @@ actor AIService {
         if let cached = await cache.get(hash: key),
            let result = try? decoder.decode(PlantAnalysisResult.self, from: cached) {
             Logger.ai.info("AIService cache hit — skipping API calls")
+            // Cache hit still counts as a scan from the user's perspective; consume quota
+            // (or ad-unlock) so the free-tier badge decrements consistently.
+            await Entitlement.shared.recordScanCompleted()
             return result
         }
 
@@ -113,6 +116,12 @@ actor AIService {
         if let encoded = try? encoder.encode(result) {
             await cache.set(hash: key, data: encoded)
         }
+
+        // 7. Decrement the user's free quota (or consume the ad-unlock token).
+        // Premium subscribers are a no-op inside Entitlement so this is safe to call
+        // unconditionally. Errors before this point (network/parse) leave quota intact —
+        // user can retry without burning a scan.
+        await Entitlement.shared.recordScanCompleted()
 
         Logger.ai.info("Analysis complete: \(topPlant.name, privacy: .public) at \(Int(topPlant.probability * 100))%")
         return result
