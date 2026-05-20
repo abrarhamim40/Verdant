@@ -28,9 +28,12 @@ actor GeminiService {
         if let session {
             self.session = session
         } else {
+            // Blueprint §B3: 20/40 for the current text-only call. The multimodal
+            // refactor (post bake-off) will widen to 25/50 since vision passes
+            // run a few seconds longer with image processing on Gemini's side.
             let config = URLSessionConfiguration.default
-            config.timeoutIntervalForRequest = 30
-            config.timeoutIntervalForResource = 60
+            config.timeoutIntervalForRequest = 20
+            config.timeoutIntervalForResource = 40
             config.waitsForConnectivity = true
             self.session = URLSession(configuration: config)
         }

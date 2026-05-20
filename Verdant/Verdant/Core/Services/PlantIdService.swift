@@ -30,9 +30,11 @@ actor PlantIdService {
         if let session {
             self.session = session
         } else {
+            // Blueprint §B3: tighter than the 30/60 default. Plant.id P95 is well
+            // under 10 s — waiting 30 s before surfacing a stall costs us users.
             let config = URLSessionConfiguration.default
-            config.timeoutIntervalForRequest = 30
-            config.timeoutIntervalForResource = 60
+            config.timeoutIntervalForRequest = 15
+            config.timeoutIntervalForResource = 30
             config.waitsForConnectivity = true
             self.session = URLSession(configuration: config)
         }
