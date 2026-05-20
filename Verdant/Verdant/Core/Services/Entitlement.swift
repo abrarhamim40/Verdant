@@ -59,7 +59,16 @@ final class Entitlement: ObservableObject {
         self.isPremium = defaults.bool(forKey: Keys.isPremium)
         self.freeScansUsedThisMonth = defaults.integer(forKey: Keys.freeScansUsed)
         self.hasAdUnlock = defaults.bool(forKey: Keys.hasAdUnlock)
-        self.lastResetMonth = defaults.string(forKey: Keys.lastResetMonth) ?? Self.monthKey(for: now())
+        // didSet doesn't fire during init — if we fall back to "current month" here without
+        // also writing it to defaults, the next session will fall back again and the rollover
+        // check will never see a mismatch. Persist explicitly when we synthesise a value.
+        if let stored = defaults.string(forKey: Keys.lastResetMonth) {
+            self.lastResetMonth = stored
+        } else {
+            let synthesised = Self.monthKey(for: now())
+            self.lastResetMonth = synthesised
+            defaults.set(synthesised, forKey: Keys.lastResetMonth)
+        }
         rolloverIfNeeded()
     }
 

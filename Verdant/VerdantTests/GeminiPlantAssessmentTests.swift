@@ -72,15 +72,21 @@ struct GeminiPlantAssessmentTests {
 
     // MARK: - isHealthy parsing
 
-    @Test func isHealthyIsCaseInsensitiveAndTrimmed() throws {
+    @Test func isHealthyIsCaseInsensitiveAndTrimmed() {
+        // Bypass JSON: tab + newline are control chars that would have to be escaped
+        // to make a valid JSON string. The intent here is to test the isHealthy
+        // computed property's trimming + case-folding directly.
         let cases = ["Healthy", "healthy", "HEALTHY", "  Healthy ", "\thealthy\n"]
         for raw in cases {
-            let json = """
-            { "plant_name": "Aloe", "condition": "\(raw)", "confidence_score": 70, "symptoms": [], "organic_treatment": "" }
-            """
-            let data = try #require(json.data(using: .utf8))
-            let a = try JSONDecoder().decode(GeminiPlantAssessment.self, from: data)
-            #expect(a.isHealthy == true, "expected healthy for '\(raw)'")
+            let a = GeminiPlantAssessment(
+                plantName: "Aloe",
+                condition: raw,
+                confidenceScore: 70,
+                symptoms: [],
+                organicTreatment: "",
+                chemicalTreatment: nil
+            )
+            #expect(a.isHealthy == true, "expected healthy for \(raw.debugDescription)")
         }
     }
 
