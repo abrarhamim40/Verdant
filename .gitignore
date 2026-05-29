@@ -309,3 +309,8 @@ graphify-out/
 /*.png
 /*.heic
 /WhatsApp*
+
+# VerdantAPILab — separate throwaway iOS tester app, its own git repo.
+# See .claude/plan/04-VerdantAPILab-SPEC.md. Lives inside this folder for
+# convenience but must NOT be tracked by the Verdant repo.
+VerdantAPILab/
