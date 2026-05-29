@@ -193,4 +193,117 @@ struct EntitlementTests {
         #expect(reloaded.freeScansUsedThisMonth == 1)
         #expect(reloaded.hasAdUnlock == true)
     }
+
+    // MARK: - Weekly ad-unlock cap (post-pivot 2026-05-26 ad model)
+
+    @Test func adUnlockConsumptionIncrementsWeeklyCounter() {
+        let (ent, _) = makeEntitlement()
+        for _ in 0..<3 { ent.recordScanCompleted() } // exhaust monthly quota
+        #expect(ent.adUnlockedScansThisWeek == 0)
+
+        ent.grantAdUnlock()
+        ent.recordScanCompleted() // consumes the ad-unlock token
+        #expect(ent.adUnlockedScansThisWeek == 1)
+        #expect(ent.remainingAdUnlocksThisWeek == 1)
+
+        ent.grantAdUnlock()
+        ent.recordScanCompleted()
+        #expect(ent.adUnlockedScansThisWeek == 2)
+        #expect(ent.remainingAdUnlocksThisWeek == 0)
+    }
+
+    @Test func consumingFreeQuotaDoesNotIncrementWeeklyCounter() {
+        // Sanity: only ad-unlocks count toward the weekly cap, not free scans.
+        let (ent, _) = makeEntitlement()
+        ent.recordScanCompleted()
+        ent.recordScanCompleted()
+        #expect(ent.adUnlockedScansThisWeek == 0)
+    }
+
+    @Test func weeklyCapReachedAfterTwoAdUnlocks() {
+        let (ent, _) = makeEntitlement()
+        for _ in 0..<3 { ent.recordScanCompleted() } // monthly quota gone
+        ent.grantAdUnlock(); ent.recordScanCompleted()
+        ent.grantAdUnlock(); ent.recordScanCompleted()
+
+        #expect(ent.adUnlockedScansThisWeek == 2)
+        #expect(ent.currentPermission() == .weeklyCapReached)
+    }
+
+    @Test func grantAdUnlockIsNoOpAtWeeklyCap() {
+        let (ent, _) = makeEntitlement()
+        for _ in 0..<3 { ent.recordScanCompleted() }
+        ent.grantAdUnlock(); ent.recordScanCompleted()
+        ent.grantAdUnlock(); ent.recordScanCompleted()
+        // Already at cap. Even if the UI tried to present another ad wall and award a
+        // token, Entitlement refuses it as defence-in-depth.
+
+        ent.grantAdUnlock()
+        #expect(ent.hasAdUnlock == false)
+        #expect(ent.currentPermission() == .weeklyCapReached)
+    }
+
+    @Test func weeklyCounterResetsOnNewWeek() {
+        // First week: exhaust quota + max out weekly ad-unlocks.
+        let week1 = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let suite = "verdant.test.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        let first = Entitlement(defaults: defaults, freeMonthlyQuota: 3, now: { week1 })
+        for _ in 0..<3 { first.recordScanCompleted() }
+        first.grantAdUnlock(); first.recordScanCompleted()
+        first.grantAdUnlock(); first.recordScanCompleted()
+        #expect(first.adUnlockedScansThisWeek == 2)
+        #expect(first.currentPermission() == .weeklyCapReached)
+
+        // Two weeks later — definitely a new ISO week. Same UserDefaults.
+        let week3 = Calendar(identifier: .iso8601).date(byAdding: .weekOfYear, value: 2, to: week1)!
+        let second = Entitlement(defaults: defaults, freeMonthlyQuota: 3, now: { week3 })
+        #expect(second.adUnlockedScansThisWeek == 0)
+        #expect(second.remainingAdUnlocksThisWeek == 2)
+        // Monthly counter also rolled over because 2 weeks crossed a month boundary in
+        // this fixed test date — that's fine, it's the realistic combination.
+    }
+
+    @Test func weeklyCapDoesNotResetWithinSameWeek() {
+        let day1 = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let day2 = day1.addingTimeInterval(60 * 60 * 24) // +1 day, same ISO week
+        let suite = "verdant.test.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+
+        let first = Entitlement(defaults: defaults, freeMonthlyQuota: 3, now: { day1 })
+        for _ in 0..<3 { first.recordScanCompleted() }
+        first.grantAdUnlock(); first.recordScanCompleted()
+        #expect(first.adUnlockedScansThisWeek == 1)
+
+        let second = Entitlement(defaults: defaults, freeMonthlyQuota: 3, now: { day2 })
+        #expect(second.adUnlockedScansThisWeek == 1) // same week — counter preserved
+    }
+
+    @Test func premiumIgnoresWeeklyCap() {
+        let (ent, _) = makeEntitlement()
+        ent.setPremium(true)
+        for _ in 0..<10 { ent.recordScanCompleted() }
+        #expect(ent.adUnlockedScansThisWeek == 0) // premium recordScan is a no-op
+        #expect(ent.remainingAdUnlocksThisWeek == .max)
+        #expect(ent.currentPermission() == .allowed)
+    }
+
+    @Test func weeklyCapStatePersistsAcrossInit() {
+        let suite = "verdant.test.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000)
+
+        do {
+            let ent = Entitlement(defaults: defaults, freeMonthlyQuota: 3, now: { date })
+            for _ in 0..<3 { ent.recordScanCompleted() }
+            ent.grantAdUnlock(); ent.recordScanCompleted()
+        }
+
+        let reloaded = Entitlement(defaults: defaults, freeMonthlyQuota: 3, now: { date })
+        #expect(reloaded.adUnlockedScansThisWeek == 1)
+        #expect(reloaded.remainingAdUnlocksThisWeek == 1)
+    }
 }

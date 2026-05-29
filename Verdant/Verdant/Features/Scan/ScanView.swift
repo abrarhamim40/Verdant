@@ -118,10 +118,13 @@ struct ScanView: View {
             Menu {
                 Section("Quota") {
                     Button("Burn 1 free scan") { entitlement.recordScanCompleted() }
-                    Button("Reset month + ad unlock") { entitlement._debugResetCounters() }
+                    Button("Reset all counters") { entitlement._debugResetCounters() }
                 }
                 Section("Tokens") {
                     Button("Grant ad unlock") { entitlement.grantAdUnlock() }
+                }
+                Section("Weekly cap") {
+                    Button("Max out weekly cap") { entitlement._debugMaxOutWeeklyCap() }
                 }
                 Section("Tier") {
                     Button(entitlement.isPremium ? "Downgrade to Free" : "Upgrade to Premium") {
@@ -249,8 +252,10 @@ struct ScanView: View {
     }
 
     /// Permission gate before triggering an actual scan navigation. Free users with
-    /// quota or a valid ad-unlock proceed straight to ScanningView; everyone else
-    /// stashes the request and the AdWallSheet drives the rest.
+    /// quota or a valid ad-unlock proceed straight to ScanningView; users at the
+    /// monthly quota wall but still under the weekly ad-unlock cap stash the request
+    /// and the AdWallSheet drives the rest; users who've hit the weekly cap get an
+    /// alert pointing them at Pro or "wait until Monday".
     private func startScan() {
         Haptics.impact(.medium)
         let imagesData = photos.map(\.optimizedData)
@@ -262,6 +267,9 @@ struct ScanView: View {
         case .requiresAds:
             pendingScanRequest = request
             showAdWall = true
+        case .weeklyCapReached:
+            Haptics.warning()
+            errorMessage = "You've used your \(entitlement.weeklyAdUnlockCap) ad-unlocked scans this week. Upgrade to Pro for unlimited scans, or wait until next Monday."
         }
     }
 
@@ -276,25 +284,52 @@ struct ScanView: View {
 
     /// Always-visible status pill so a fresh free user sees their budget on first
     /// open, not only after they've selected photos. Premium users see no pill.
+    /// Three states: free quota left → ad-unlock available this week → weekly cap hit.
     @ViewBuilder
     private var scansRemainingBadge: some View {
         if !entitlement.isPremium {
-            let remaining = entitlement.remainingFreeScans
+            let info = badgeContent
             HStack(spacing: 6) {
-                Image(systemName: remaining > 0 ? "leaf.fill" : "play.rectangle.fill")
-                Text(remaining > 0
-                     ? "\(remaining) free scan\(remaining == 1 ? "" : "s") left this month"
-                     : "Watch 2 ads to scan more")
+                Image(systemName: info.icon)
+                Text(info.label)
             }
             .font(.subheadline.weight(.semibold))
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background((remaining > 0 ? Color.forestGreen : Color.terracotta).opacity(0.14))
-            .foregroundStyle(remaining > 0 ? Color.forestGreen : Color.terracotta)
+            .background(info.color.opacity(0.14))
+            .foregroundStyle(info.color)
             .clipShape(Capsule())
-            .accessibilityLabel(remaining > 0
-                                ? "\(remaining) free scans remaining this month"
-                                : "Free quota used. Watch 2 ads to unlock another scan.")
+            .accessibilityLabel(info.accessibility)
+        }
+    }
+
+    private var badgeContent: (icon: String, label: String, color: Color, accessibility: String) {
+        let remaining = entitlement.remainingFreeScans
+        if remaining > 0 {
+            return (
+                icon: "leaf.fill",
+                label: "\(remaining) free scan\(remaining == 1 ? "" : "s") left this month",
+                color: Color.forestGreen,
+                accessibility: "\(remaining) free scans remaining this month"
+            )
+        }
+        // Quota exhausted. Either ads are still an option, or the weekly cap is hit.
+        switch entitlement.currentPermission() {
+        case .weeklyCapReached:
+            return (
+                icon: "lock.fill",
+                label: "Weekly cap reached — upgrade or wait until Monday",
+                color: Color.terracotta,
+                accessibility: "You've used your weekly ad-unlocked scans. Upgrade to Pro or wait until next Monday."
+            )
+        default:
+            let left = entitlement.remainingAdUnlocksThisWeek
+            return (
+                icon: "play.rectangle.fill",
+                label: left == 1 ? "1 ad-unlock left this week" : "Watch 2 ads to scan (\(left) left this week)",
+                color: Color.terracotta,
+                accessibility: "Free quota used. \(left) ad-unlocked scans available this week."
+            )
         }
     }
 
